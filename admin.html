@@ -367,6 +367,7 @@
           <div class="form-group">
             <label for="repairStatus">อัปเดตสถานะ</label>
             <select id="repairStatus" class="form-control" onchange="toggleTechForm(this.value)">
+              <option value="Pending">รอดำเนินการ (Pending)</option>
               <option value="In Progress">กำลังดำเนินการ (In Progress)</option>
               <option value="Completed">ซ่อมเสร็จสิ้น (Completed)</option>
               <option value="Cancelled">ยกเลิกรายการ (Cancelled)</option>
@@ -399,6 +400,67 @@
       </div>
     </div>
   </div>
+  <!-- UPDATE PAYMENT MODAL -->
+  <div id="paymentModal" class="modal-backdrop">
+    <div class="modal-container glass-panel" style="max-width: 500px;">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-file-invoice-dollar"></i> จัดการรายการค่าใช้จ่าย</h3>
+        <button class="modal-close-btn" onclick="closeModal('paymentModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="updatePaymentForm">
+          <input type="hidden" id="paymentTargetId">
+          <div class="form-group">
+            <label>รหัสรายการ</label>
+            <input type="text" id="paymentTargetDisplayId" class="form-control" readonly>
+          </div>
+          <div class="form-group">
+            <label>ห้องพัก</label>
+            <input type="text" id="paymentRoomNo" class="form-control" readonly>
+          </div>
+          <div class="form-row">
+            <div class="form-group">
+              <label for="paymentPeriod">รอบบิล</label>
+              <input type="text" id="paymentPeriod" class="form-control" placeholder="เช่น 06/2026" required>
+            </div>
+            <div class="form-group">
+              <label for="paymentAmount">ยอดชำระ (บาท)</label>
+              <input type="number" step="0.01" id="paymentAmount" class="form-control" required>
+            </div>
+          </div>
+          <div class="form-group">
+            <label for="paymentType">ประเภทค่าใช้จ่าย</label>
+            <select id="paymentType" class="form-control" required>
+              <option value="ค่าส่วนกลาง">ค่าส่วนกลาง</option>
+              <option value="ค่าน้ำประปา">ค่าน้ำประปา</option>
+              <option value="ค่าที่จอดรถ">ค่าที่จอดรถ</option>
+              <option value="อื่นๆ">อื่นๆ</option>
+            </select>
+          </div>
+          <div class="form-group">
+            <label for="paymentStatus">สถานะบิล</label>
+            <select id="paymentStatus" class="form-control">
+              <option value="Unpaid">ค้างชำระ (Unpaid)</option>
+              <option value="Under Review">รอตรวจสอบ (Under Review)</option>
+              <option value="Paid">จ่ายแล้ว (Paid)</option>
+              <option value="Cancelled">ยกเลิกบิล (Cancelled)</option>
+            </select>
+          </div>
+          
+          <div id="paymentSlipPreviewSection" style="display: none; margin-top: 15px; text-align: center; border-top: 1px solid var(--glass-border); padding-top: 15px;">
+            <label style="display: block; margin-bottom: 8px;">รูปภาพสลิปที่อัปโหลด</label>
+            <img id="paymentSlipImage" src="" style="max-width: 100%; max-height: 250px; object-fit: contain; border-radius: var(--radius-sm); cursor: pointer;" onclick="window.open(this.src)">
+            <p style="font-size: 0.75rem; color: var(--text-muted); margin-top: 5px;">คลิกที่รูปภาพเพื่อเปิดดูขนาดใหญ่</p>
+          </div>
+          
+          <button type="submit" class="btn btn-primary" style="margin-top: 15px;">
+            <span class="btn-text">บันทึกการเปลี่ยนแปลง</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
   <!-- EDIT RESIDENT MODAL -->
   <div id="editResidentModal" class="modal-backdrop">
     <div class="modal-container glass-panel" style="max-width: 500px;">
@@ -606,6 +668,9 @@
           var pIdx = paymentsList.findIndex(p => p.payment_id === postData.payment_id);
           if (pIdx !== -1) {
             paymentsList[pIdx].status = postData.status;
+            if (postData.billing_period !== undefined) paymentsList[pIdx].billing_period = postData.billing_period;
+            if (postData.amount !== undefined) paymentsList[pIdx].amount = parseFloat(postData.amount);
+            if (postData.type !== undefined) paymentsList[pIdx].type = postData.type;
             if (postData.status === 'Paid') {
               paymentsList[pIdx].receipt_pdf_url = "https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf";
               paymentsList[pIdx].payment_date = new Date().toISOString();
@@ -700,6 +765,9 @@
 
       // Edit resident form
       document.getElementById("editResidentForm").addEventListener("submit", handleEditResidentSubmit);
+
+      // Update payment form
+      document.getElementById("updatePaymentForm").addEventListener("submit", handlePaymentUpdateSubmit);
 
       // Check session
       const savedPass = safeStorage.getItem("metro_admin_password");
@@ -818,23 +886,14 @@
         else if (item.status === "Completed") { statusClass = "badge-completed"; statusText = "Completed"; }
         else if (item.status === "Cancelled") { statusClass = "badge-cancelled"; statusText = "Cancelled"; }
         
-        let actions = "";
+        let actions = `<div class="action-group" style="display:flex; gap:6px;">`;
         if (item.status === "Pending") {
-          actions = `
-            <div class="action-group">
-              <button class="btn btn-primary btn-sm" onclick="takeJob('${item.request_id}')"><i class="fa-solid fa-wrench"></i> รับงาน</button>
-            </div>
-          `;
+          actions += `<button class="btn btn-primary btn-sm" onclick="takeJob('${item.request_id}')"><i class="fa-solid fa-wrench"></i> รับงาน</button>`;
         } else if (item.status === "In Progress") {
-          actions = `
-            <div class="action-group">
-              <button class="btn btn-secondary btn-sm" style="background:#10b981; color:#fff;" onclick="openUpdateRepairModal('${item.request_id}', 'Completed')"><i class="fa-solid fa-circle-check"></i> เสร็จสิ้น</button>
-              <button class="btn btn-secondary btn-sm" onclick="openUpdateRepairModal('${item.request_id}', 'Cancelled')"><i class="fa-solid fa-circle-xmark"></i> ยกเลิก</button>
-            </div>
-          `;
-        } else {
-          actions = `<span style="color:var(--text-muted); font-size:0.8rem;">ปิดรับงานแล้ว</span>`;
+          actions += `<button class="btn btn-secondary btn-sm" style="background:#10b981; color:#fff; border-color:#10b981;" onclick="openUpdateRepairModal('${item.request_id}', 'Completed', '${item.technician_name || ''}')"><i class="fa-solid fa-circle-check"></i> เสร็จสิ้น</button>`;
         }
+        actions += `<button class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--glass-border);" onclick="openUpdateRepairModal('${item.request_id}', '${item.status}', '${item.technician_name || ''}')"><i class="fa-solid fa-gear"></i> จัดการ</button>`;
+        actions += `</div>`;
         
         html += `
           <tr>
@@ -897,10 +956,11 @@
       .catch(() => showLoader(false));
     }
 
-    function openUpdateRepairModal(id, defaultStatus) {
+    function openUpdateRepairModal(id, defaultStatus, techName) {
       document.getElementById("repairTargetId").value = id;
       document.getElementById("repairTargetDisplayId").value = id;
       document.getElementById("repairStatus").value = defaultStatus;
+      document.getElementById("repairTechName").value = techName || "";
       
       toggleTechForm(defaultStatus);
       document.getElementById("repairModal").style.display = "flex";
@@ -1015,18 +1075,16 @@
           slipCell = `<img src="${item.slip_url}" class="thumbnail" onclick="viewSlip('${item.payment_id}', '${item.slip_url}')">`;
         }
         
-        let actions = "";
+        const escapedType = String(item.type || '').replace(/'/g, "\\'");
+        const escapedPeriod = String(item.billing_period || '').replace(/'/g, "\\'");
+        
+        let actions = `<div class="action-group" style="display:flex; gap:6px;">`;
         if (item.status === "Under Review") {
-          actions = `
-            <div class="action-group">
-              <button class="btn btn-primary btn-sm" onclick="viewSlip('${item.payment_id}', '${item.slip_url}')"><i class="fa-solid fa-magnifying-glass"></i> ตรวจสอบสลิป</button>
-            </div>
-          `;
-        } else if (item.status === "Paid") {
-          actions = `<span style="color:var(--color-completed); font-size:0.8rem;"><i class="fa-solid fa-circle-check"></i> ตรวจแล้ว</span>`;
+          actions += `<button class="btn btn-primary btn-sm" onclick="openUpdatePaymentModal('${item.payment_id}', '${item.room_no}', '${escapedPeriod}', ${item.amount}, '${escapedType}', '${item.status}', '${item.slip_url || ''}')"><i class="fa-solid fa-magnifying-glass"></i> ตรวจสลิป</button>`;
         } else {
-          actions = `<span style="color:var(--text-muted); font-size:0.8rem;">รอลูกบ้านอัปโหลด</span>`;
+          actions += `<button class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--glass-border);" onclick="openUpdatePaymentModal('${item.payment_id}', '${item.room_no}', '${escapedPeriod}', ${item.amount}, '${escapedType}', '${item.status}', '${item.slip_url || ''}')"><i class="fa-solid fa-gear"></i> จัดการ</button>`;
         }
+        actions += `</div>`;
         
         let receiptCell = '<span style="color:var(--text-muted);">-</span>';
         if (item.receipt_pdf_url) {
@@ -1129,6 +1187,77 @@
         }
       })
       .catch(() => showLoader(false));
+    }
+
+    function openUpdatePaymentModal(id, roomNo, period, amount, type, status, slipUrl) {
+      document.getElementById("paymentTargetId").value = id;
+      document.getElementById("paymentTargetDisplayId").value = id;
+      document.getElementById("paymentRoomNo").value = roomNo;
+      document.getElementById("paymentPeriod").value = period;
+      document.getElementById("paymentAmount").value = amount;
+      document.getElementById("paymentType").value = type;
+      document.getElementById("paymentStatus").value = status;
+      
+      const slipSec = document.getElementById("paymentSlipPreviewSection");
+      const slipImg = document.getElementById("paymentSlipImage");
+      
+      if (slipUrl) {
+        slipImg.src = slipUrl;
+        slipSec.style.display = "block";
+      } else {
+        slipImg.src = "";
+        slipSec.style.display = "none";
+      }
+      
+      openModal("paymentModal");
+    }
+
+    function handlePaymentUpdateSubmit(e) {
+      e.preventDefault();
+      const id = document.getElementById("paymentTargetId").value;
+      const period = document.getElementById("paymentPeriod").value.trim();
+      const amount = document.getElementById("paymentAmount").value.trim();
+      const type = document.getElementById("paymentType").value;
+      const status = document.getElementById("paymentStatus").value;
+      
+      const submitBtn = e.target.querySelector("button[type='submit']");
+      const btnText = submitBtn.querySelector(".btn-text");
+      submitBtn.disabled = true;
+      btnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> กำลังบันทึก...`;
+      
+      const payload = {
+        action: "updatePaymentStatus",
+        password: adminPassword,
+        payment_id: id,
+        billing_period: period,
+        amount: parseFloat(amount),
+        type: type,
+        status: status
+      };
+      
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        submitBtn.disabled = false;
+        btnText.innerText = "บันทึกการเปลี่ยนแปลง";
+        closeModal("paymentModal");
+        
+        if (res.success) {
+          showToast("อัปเดตรายการชำระเงินเรียบร้อยแล้ว", "success");
+          loadPaymentsData();
+        } else {
+          showToast("ไม่สามารถอัปเดตรายการ: " + res.message, "error");
+        }
+      })
+      .catch(err => {
+        submitBtn.disabled = false;
+        btnText.innerText = "บันทึกการเปลี่ยนแปลง";
+        showToast("การเชื่อมต่อเซิร์ฟเวอร์ล้มเหลว", "error");
+        console.error(err);
+      });
     }
 
     // --- RESIDENTS ACTIONS ---
