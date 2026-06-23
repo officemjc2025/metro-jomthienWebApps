@@ -1,0 +1,1729 @@
+<!DOCTYPE html>
+<html lang="th">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>ระบบบริการลูกบ้าน - Metro Jomthien Condotel</title>
+  <!-- Google Fonts & FontAwesome -->
+  <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.4.0/css/all.min.css">
+  <link rel="stylesheet" href="styles.css">
+</head>
+<body>
+
+  <!-- Page Loader -->
+  <div id="pageLoader" class="page-loader">
+    <div class="loading-spinner"></div>
+    <p style="margin-top: 15px; color: var(--text-secondary);" data-i18n="loader_text">กำลังโหลดข้อมูลระบบ...</p>
+  </div>
+
+  <!-- Verification Modal (if room not linked) -->
+  <div id="authModal" class="modal-backdrop" style="display: flex;">
+    <div class="modal-container glass-panel">
+      <div class="modal-header">
+        <h3><i class="fa-solid fa-hotel" style="color: var(--accent-gold);"></i> <span data-i18n="auth_title">เข้าสู่ระบบบริการลูกบ้าน</span></h3>
+        <!-- Language Switcher Buttons in Modal -->
+        <div class="lang-switcher" style="display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 20px; border: 1px solid var(--glass-border);">
+          <button type="button" onclick="setLanguage('th')" id="modal-lang-btn-th" class="lang-btn-modal" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 10px; border-radius:15px; font-size:0.75rem; cursor:pointer; font-weight:600; transition:var(--transition-smooth);">TH</button>
+          <button type="button" onclick="setLanguage('en')" id="modal-lang-btn-en" class="lang-btn-modal" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 10px; border-radius:15px; font-size:0.75rem; cursor:pointer; font-weight:600; transition:var(--transition-smooth);">EN</button>
+        </div>
+      </div>
+      <div class="modal-body">
+        <!-- Auth Tabs -->
+        <div class="auth-tabs" style="display: flex; border-bottom: 1px solid var(--glass-border); margin-bottom: 20px;">
+          <button type="button" onclick="switchAuthTab('login')" id="auth-tab-login" class="auth-tab-btn active" style="flex: 1; background: transparent; border: none; border-bottom: 2px solid var(--accent-gold); color: #fff; padding: 10px; cursor: pointer; font-weight: 600;" data-i18n="auth_tab_login">เข้าสู่ระบบ</button>
+          <button type="button" onclick="switchAuthTab('register')" id="auth-tab-register" class="auth-tab-btn" style="flex: 1; background: transparent; border: none; border-bottom: 2px solid transparent; color: var(--text-secondary); padding: 10px; cursor: pointer; font-weight: 600;" data-i18n="auth_tab_register">ลงทะเบียนใหม่</button>
+        </div>
+
+        <!-- LOGIN FORM WRAPPER -->
+        <div id="loginFormWrapper">
+          <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.9rem;" data-i18n="auth_desc">
+            กรุณากรอกเลขที่ห้องและเบอร์โทรศัพท์ที่ลงทะเบียนไว้กับนิติบุคคล เพื่อยืนยันตัวตนการเข้าใช้งานระบบ
+          </p>
+          <form id="authForm">
+            <div class="form-group">
+              <label for="authRoomNo" data-i18n="auth_room_label">เลขที่ห้อง (เช่น 420/101)</label>
+              <input type="text" id="authRoomNo" class="form-control" placeholder="420/XXX" data-i18n-placeholder="auth_room_placeholder" required>
+            </div>
+            <div class="form-group">
+              <label for="authPhone" data-i18n="auth_phone_label">เบอร์โทรศัพท์ (4 ตัวท้าย หรือ เบอร์เต็ม)</label>
+              <input type="tel" id="authPhone" class="form-control" placeholder="08XXXXXXXX" data-i18n-placeholder="auth_phone_placeholder" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+              <span class="btn-text" data-i18n="auth_submit_btn">ยืนยันตัวตน</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- REGISTER FORM WRAPPER -->
+        <div id="registerFormWrapper" style="display: none;">
+          <p style="margin-bottom: 20px; color: var(--text-secondary); font-size: 0.9rem;" data-i18n="reg_desc">
+            กรุณากรอกข้อมูลเพื่อลงทะเบียนเข้าใช้งานระบบ โดยระบุเลขห้อง ชื่อเจ้าของห้อง และเบอร์โทรศัพท์มือถือ
+          </p>
+          <form id="registerForm">
+            <div class="form-group">
+              <label for="regRoomNo" data-i18n="reg_room_label">เลขที่ห้อง (เช่น 420/101)</label>
+              <input type="text" id="regRoomNo" class="form-control" placeholder="420/XXX" data-i18n-placeholder="auth_room_placeholder" required>
+            </div>
+            <div class="form-group">
+              <label for="regOwnerName" data-i18n="reg_name_label">ชื่อ-นามสกุล เจ้าของห้อง</label>
+              <input type="text" id="regOwnerName" class="form-control" placeholder="เช่น นายสมชาย ใจดี" data-i18n-placeholder="reg_name_placeholder" required>
+            </div>
+            <div class="form-group">
+              <label for="regPhone" data-i18n="reg_phone_label">เบอร์โทรศัพท์มือถือ</label>
+              <input type="tel" id="regPhone" class="form-control" placeholder="08XXXXXXXX" data-i18n-placeholder="auth_phone_placeholder" required>
+            </div>
+            <div class="form-group">
+              <label for="regEmail" data-i18n="reg_email_label">อีเมลติดต่อ</label>
+              <input type="email" id="regEmail" class="form-control" placeholder="example@email.com" data-i18n-placeholder="reg_email_placeholder" required>
+            </div>
+            <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+              <span class="btn-text" data-i18n="reg_submit_btn">ส่งคำขอลงทะเบียน</span>
+            </button>
+          </form>
+        </div>
+
+        <!-- PENDING STATUS WRAPPER -->
+        <div id="pendingStatusWrapper" style="display: none; text-align: center; padding: 10px 0;">
+          <div style="font-size: 3.5rem; color: var(--accent-gold); margin-bottom: 15px;">
+            <i class="fa-solid fa-hourglass-half fa-spin"></i>
+          </div>
+          <h4 style="margin-bottom: 10px; color: #fff;" data-i18n="pending_title">อยู่ระหว่างรอการอนุมัติ</h4>
+          <p id="pendingMessageText" style="color: var(--text-secondary); font-size: 0.9rem; margin-bottom: 25px; line-height: 1.6;">
+            ข้อมูลลงทะเบียนของคุณกำลังรอรับการอนุมัติจากระบบภายใน 5 นาที หรือนิติบุคคล
+          </p>
+          <button type="button" onclick="checkPendingStatus()" class="btn btn-primary">
+            <span data-i18n="pending_check_btn">ลองตรวจสอบสถานะอีกครั้ง</span>
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <!-- Main Application Wrapper -->
+  <div class="container">
+    
+    <!-- Header -->
+    <header class="main-header glass-panel">
+      <div class="condo-brand">
+        <h1><i class="fa-solid fa-building-user"></i> <span data-i18n="condo_name">METRO JOMTHIEN</span></h1>
+        <span data-i18n="condo_portal">Condominium Portal</span>
+      </div>
+      <div style="display: flex; flex-direction: column; align-items: flex-end; gap: 8px;">
+        <!-- Language Switcher Buttons -->
+        <div class="lang-switcher" style="display: flex; gap: 4px; background: rgba(255,255,255,0.05); padding: 4px; border-radius: 20px; border: 1px solid var(--glass-border);">
+          <button onclick="setLanguage('th')" id="lang-btn-th" class="lang-btn" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 10px; border-radius:15px; font-size:0.75rem; cursor:pointer; font-weight:600; transition:var(--transition-smooth);">TH</button>
+          <button onclick="setLanguage('en')" id="lang-btn-en" class="lang-btn" style="background:transparent; border:none; color:var(--text-secondary); padding:4px 10px; border-radius:15px; font-size:0.75rem; cursor:pointer; font-weight:600; transition:var(--transition-smooth);">EN</button>
+        </div>
+        <div class="header-meta" style="display: flex; align-items: center; gap: 10px;">
+          <div id="userRoomDisplay"><span data-i18n="room_no_display">ห้องพัก</span>: -</div>
+          <div class="status-badge" id="officeStatus" data-i18n="office_open">สำนักงาน: เปิดทำการ</div>
+          <button onclick="logoutResident()" id="logoutBtn" class="btn btn-secondary btn-sm" style="display: none; width: auto; padding: 4px 8px; font-size: 0.75rem; border-radius: 4px;" data-i18n="btn_logout"><i class="fa-solid fa-right-from-bracket"></i> ออกจากระบบ</button>
+        </div>
+      </div>
+    </header>
+
+    <!-- Navigation (Tabs) -->
+    <nav class="tabs-navigation">
+      <button class="tab-btn active" data-tab="tab-home" id="tab-btn-home">
+        <i class="fa-solid fa-bullhorn"></i> <span data-i18n="tab_news">ข่าวสารประชาสัมพันธ์</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-repair" id="tab-btn-repair">
+        <i class="fa-solid fa-screwdriver-wrench"></i> <span data-i18n="tab_repair">แจ้งซ่อมบำรุง</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-payment" id="tab-btn-payment">
+        <i class="fa-solid fa-receipt"></i> <span data-i18n="tab_payment">บิลและการชำระเงิน</span>
+      </button>
+      <button class="tab-btn" data-tab="tab-contact" id="tab-btn-contact">
+        <i class="fa-solid fa-circle-info"></i> <span data-i18n="tab_contact">ติดต่อสำนักงาน</span>
+      </button>
+    </nav>
+
+    <!-- Content Sections -->
+    <main>
+      
+      <!-- TAB 1: HOME / ANNOUNCEMENTS -->
+      <section id="tab-home" class="tab-content active">
+        <!-- Hero Announcement (Latest) -->
+        <div id="heroAnnouncement" class="hero-announcement" style="display: none;">
+          <img id="heroImg" src="" alt="Hero Image" class="hero-img">
+          <div class="hero-overlay"></div>
+          <div class="hero-body">
+            <span class="hero-category" id="heroCategory" data-i18n="tab_news">ประชาสัมพันธ์</span>
+            <h2 class="hero-title" id="heroTitle">หัวข้อข่าวสารล่าสุด</h2>
+            <p class="hero-desc" id="heroDesc">เนื้อหาโดยย่อของข่าวสาร</p>
+          </div>
+        </div>
+
+        <h2 class="section-title"><i class="fa-solid fa-newspaper"></i> <span data-i18n="news_section_title">ข่าวสารทั่วไปของโครงการ</span></h2>
+        <div class="news-grid" id="announcementsList">
+          <!-- Announcements will be loaded here dynamically -->
+        </div>
+      </section>
+
+      <!-- TAB 2: REPAIR REQUESTS -->
+      <section id="tab-repair" class="tab-content">
+        <div class="split-layout">
+          <!-- Repair Form -->
+          <div class="glass-panel card-form-wrapper">
+            <h3 style="margin-bottom: 20px;"><i class="fa-solid fa-circle-plus"></i> <span data-i18n="repair_new_title">แจ้งซ่อมใหม่</span></h3>
+            <form id="repairForm">
+              <div class="form-group">
+                <label data-i18n="repair_room_label">เลขที่ห้อง</label>
+                <input type="text" id="repairRoomNo" class="form-control" readonly>
+              </div>
+              <div class="form-group">
+                <label for="repairCategory" data-i18n="repair_cat_label">หมวดหมู่งานซ่อม</label>
+                <select id="repairCategory" class="form-control" required>
+                  <option value="" disabled selected data-i18n="repair_cat_placeholder">เลือกหมวดหมู่...</option>
+                  <option value="ไฟฟ้า" data-i18n="repair_cat_electric">ระบบไฟฟ้า</option>
+                  <option value="ประปา" data-i18n="repair_cat_plumb">ระบบประปา/สุขาภิบาล</option>
+                  <option value="เครื่องปรับอากาศ" data-i18n="repair_cat_ac">เครื่องปรับอากาศ</option>
+                  <option value="โครงสร้าง" data-i18n="repair_cat_struct">โครงสร้าง/ประตู/หน้าต่าง</option>
+                  <option value="อื่นๆ" data-i18n="repair_cat_other">อื่นๆ (ระบุในรายละเอียด)</option>
+                </select>
+              </div>
+              <div class="form-group">
+                <label for="repairDescription" data-i18n="repair_desc_label">รายละเอียดปัญหา</label>
+                <textarea id="repairDescription" class="form-control" rows="4" data-i18n-placeholder="repair_desc_placeholder" placeholder="กรุณาระบุรายละเอียด เช่น ก๊อกน้ำอ่างล้างหน้าไหลไม่หยุด..." required></textarea>
+              </div>
+              <div class="form-group">
+                <label data-i18n="repair_photo_label">แนบรูปภาพความเสียหาย (ก่อนซ่อม)</label>
+                <div class="upload-area" onclick="triggerFileInput('repairFileInput')">
+                  <i class="fa-solid fa-cloud-arrow-up"></i>
+                  <span data-i18n="repair_upload_placeholder">คลิกเพื่ออัปโหลดรูปภาพ</span>
+                  <input type="file" id="repairFileInput" style="display: none;" accept="image/*" onchange="previewFile(this, 'repairPreview', 'repairPreviewContainer')">
+                </div>
+                <div id="repairPreviewContainer" class="upload-preview-container">
+                  <img id="repairPreview" src="" class="upload-preview" alt="Preview Image">
+                  <button type="button" class="remove-upload-btn" onclick="clearUpload('repairFileInput', 'repairPreview', 'repairPreviewContainer')">
+                    <i class="fa-solid fa-xmark"></i>
+                  </button>
+                </div>
+              </div>
+              <button type="submit" class="btn btn-primary">
+                <span class="btn-text"><i class="fa-solid fa-paper-plane"></i> <span data-i18n="repair_submit_btn">ส่งคำขอแจ้งซ่อม</span></span>
+              </button>
+            </form>
+          </div>
+
+          <!-- Repair List -->
+          <div>
+            <h3 class="section-title"><i class="fa-solid fa-list-check"></i> <span data-i18n="repair_history_title">ประวัติการแจ้งซ่อมของท่าน</span></h3>
+            <div class="repair-list" id="repairsContainer">
+              <!-- Repair requests list will load here -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 3: PAYMENTS -->
+      <section id="tab-payment" class="tab-content">
+        <div class="split-layout">
+          <!-- Payment Info Info Card -->
+          <div class="glass-panel card-form-wrapper" style="height: fit-content;">
+            <h3 style="margin-bottom: 15px;"><i class="fa-solid fa-building-columns"></i> <span data-i18n="payment_channels">ช่องทางการชำระเงิน</span></h3>
+            <p style="font-size: 0.9rem; color: var(--text-secondary); margin-bottom: 20px;" data-i18n="payment_desc">
+              กรุณาโอนเงินเข้าบัญชีนิติบุคคลฯ และแนบหลักฐานการชำระเงินในรายการบิลด้านขวาเพื่อออกใบเสร็จรับเงิน
+            </p>
+            
+            <div style="background: rgba(255,255,255,0.03); border: 1px solid var(--glass-border); padding: 15px; border-radius: var(--radius-sm); margin-bottom: 15px;">
+              <h4 style="color: var(--accent-gold); margin-bottom: 8px;"><i class="fa-solid fa-university"></i> <span data-i18n="payment_bank">ธนาคารกรุงไทย</span></h4>
+              <p style="font-weight: 500; font-size: 1.1rem; color: #fff;">เลขบัญชี: 242-0-12345-6</p>
+              <p style="font-size: 0.85rem; color: var(--text-secondary);" data-i18n="payment_acc_name">ชื่อบัญชี: นิติบุคคลอาคารชุด เมโทร จอมเทียน คอนโดเทล</p>
+            </div>
+            
+            <div style="font-size: 0.85rem; color: var(--text-muted);">
+              <p><i class="fa-solid fa-circle-info"></i> <span data-i18n="payment_note_1">หลังจากแนบสลิปแล้ว นิติบุคคลจะทำการตรวจสอบภายใน 24 ชม.</span></p>
+              <p><i class="fa-solid fa-file-pdf" style="margin-top: 5px;"></i> <span data-i18n="payment_note_2">เมื่อยืนยันแล้ว สามารถดาวน์โหลดใบเสร็จ PDF ได้ทันที</span></p>
+            </div>
+          </div>
+
+          <!-- Bills/Payments List -->
+          <div>
+            <h3 class="section-title"><i class="fa-solid fa-file-invoice-dollar"></i> <span data-i18n="payment_history_title">รายการค่าใช้จ่ายค้างชำระ & ประวัติการชำระเงิน</span></h3>
+            <div class="payment-list" id="paymentsContainer">
+              <!-- Payments list will load here -->
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <!-- TAB 4: CONTACT & EMERGENCY -->
+      <section id="tab-contact" class="tab-content">
+        <div class="contact-grid">
+          <!-- Juristic Office Info -->
+          <div class="glass-panel contact-card">
+            <h3 data-i18n="contact_title"><i class="fa-solid fa-building"></i> สำนักงานนิติบุคคลฯ</h3>
+            <div class="contact-list">
+              <div class="contact-item">
+                <i class="fa-solid fa-location-dot"></i>
+                <div class="contact-info">
+                  <h4 data-i18n="contact_address_label">ที่อยู่โครงการ</h4>
+                  <p>420 หมู่ 12 ถนนหาดจอมเทียน ซอย19 ต.หนองปรือ อ.บางละมุง จ.ชลบุรี 20150</p>
+                </div>
+              </div>
+              <div class="contact-item">
+                <i class="fa-solid fa-phone"></i>
+                <div class="contact-info">
+                  <h4 data-i18n="contact_phone_label">เบอร์ติดต่อ</h4>
+                  <p>038-232-801-8</p>
+                </div>
+              </div>
+              <div class="contact-item">
+                <i class="fa-solid fa-envelope"></i>
+                <div class="contact-info">
+                  <h4 data-i18n="contact_email_label">อีเมลติดต่อ</h4>
+                  <p>metro_jomthien@hotmail.com</p>
+                </div>
+              </div>
+              <div class="contact-item">
+                <i class="fa-solid fa-clock"></i>
+                <div class="contact-info">
+                  <h4 data-i18n="contact_hours_label">เวลาเปิดทำการ</h4>
+                  <p data-i18n="contact_hours_val">เปิดบริการทุกวัน (จันทร์ - อาทิตย์) เวลา 08:00 น. - 17:00 น.</p>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <!-- Info Rules -->
+          <div class="glass-panel contact-card">
+            <h3 data-i18n="contact_sec_title"><i class="fa-solid fa-shield-halved"></i> บริการและความปลอดภัย</h3>
+            <div class="contact-list">
+              <p style="color: var(--text-secondary); font-size: 0.95rem;" data-i18n="contact_sec_desc">
+                ลูกบ้านทุกท่านสามารถสื่อสารและทำธุรกรรมได้อย่างสะดวกรวดเร็วผ่าน Line OA และ Web App นี้ โดยจะมีการบันทึกประวัติการส่งข้อมูลและใบเสร็จทั้งหมดไว้ในระบบ Google Sheets มีความโปร่งใสและตรวจสอบย้อนหลังได้ตลอดเวลา
+              </p>
+              <div style="border-top: 1px solid var(--glass-border); padding-top: 15px; margin-top: 15px;">
+                <h4 style="margin-bottom: 8px; color: var(--text-primary);" data-i18n="contact_link_line_title">ต้องการเชื่อม Line OA แชท?</h4>
+                <p style="font-size: 0.85rem; color: var(--text-secondary); margin-bottom: 12px;" data-i18n="contact_link_line_desc">
+                  พิมพ์คำว่า "แจ้งซ่อม" ในช่องแชท Line เพื่อลงทะเบียนและรับข้อความแจ้งเตือนสถานะงานหรือใบเสร็จโดยตรงผ่าน Line ของคุณ
+                </p>
+              </div>
+            </div>
+          </div>
+        </div>
+
+        <!-- Emergency Strip -->
+        <div class="emergency-strip">
+          <div class="emergency-info">
+            <h3 data-i18n="contact_emergency_title"><i class="fa-solid fa-triangle-exclamation"></i> เบอร์โทรศัพท์ฉุกเฉิน (บริการ 24 ชั่วโมง)</h3>
+            <p style="color: var(--text-secondary); font-size: 0.9rem;" data-i18n="contact_emergency_desc">กรณีน้ำรั่ว ท่อแตก ไฟดับลิฟต์ค้าง หรือเหตุฉุกเฉินอื่นๆ</p>
+          </div>
+          <div class="emergency-contacts">
+            <a href="tel:0635971766" class="emergency-contact-btn">
+              <i class="fa-solid fa-user-shield"></i> <span data-i18n="contact_emergency_mgr">ผจก.อาคาร</span>: 063-597-1766
+            </a>
+            <a href="tel:0816547907" class="emergency-contact-btn">
+              <i class="fa-solid fa-wrench"></i> <span data-i18n="contact_emergency_tech">ช่างอาคาร</span>: 081-654-7907
+            </a>
+          </div>
+        </div>
+      </section>
+
+    </main>
+
+  </div>
+
+  <!-- UPLOAD SLIP MODAL -->
+  <div id="uploadSlipModal" class="modal-backdrop">
+    <div class="modal-container glass-panel">
+      <div class="modal-header">
+        <h3 data-i18n="slip_modal_title"><i class="fa-solid fa-cloud-arrow-up"></i> แนบหลักฐานการโอนเงิน</h3>
+        <button class="modal-close-btn" onclick="closeModal('uploadSlipModal')">&times;</button>
+      </div>
+      <div class="modal-body">
+        <form id="uploadSlipForm">
+          <input type="hidden" id="slipPaymentId">
+          <div class="form-group">
+            <label data-i18n="slip_modal_id">รหัสรายการ</label>
+            <input type="text" id="slipPaymentDisplayId" class="form-control" readonly>
+          </div>
+          <div class="form-group">
+            <label data-i18n="slip_modal_amount">จำนวนเงินที่ต้องชำระ (บาท)</label>
+            <input type="text" id="slipAmount" class="form-control" readonly>
+          </div>
+          <div class="form-group">
+            <label data-i18n="slip_modal_upload">อัปโหลดสลิปธนาคาร</label>
+            <div class="upload-area" onclick="triggerFileInput('slipFileInput')">
+              <i class="fa-solid fa-file-image"></i>
+              <span data-i18n="slip_modal_upload_desc">คลิกเพื่อแนบรูปภาพสลิป (.jpg, .png)</span>
+              <input type="file" id="slipFileInput" style="display: none;" accept="image/*" onchange="previewFile(this, 'slipPreview', 'slipPreviewContainer')" required>
+            </div>
+            <div id="slipPreviewContainer" class="upload-preview-container">
+              <img id="slipPreview" src="" class="upload-preview" alt="Slip Preview">
+              <button type="button" class="remove-upload-btn" onclick="clearUpload('slipFileInput', 'slipPreview', 'slipPreviewContainer')">
+                <i class="fa-solid fa-xmark"></i>
+              </button>
+            </div>
+          </div>
+          <button type="submit" class="btn btn-primary" style="margin-top: 10px;">
+            <span class="btn-text" data-i18n="slip_modal_submit">ยืนยันและส่งหลักฐาน</span>
+          </button>
+        </form>
+      </div>
+    </div>
+  </div>
+
+  <!-- TOAST CONTAINER -->
+  <div class="toast-container" id="toastContainer"></div>
+
+  <!-- Line LIFF SDK -->
+  <script charset="utf-8" src="https://static.line-scdn.net/liff/edge/2/sdk.js"></script>
+  
+  <!-- App JS Logic -->
+  <script>
+    // --- SAFE STORAGE WRAPPER ---
+    const safeStorage = {
+      getItem: function(key) {
+        try {
+          return localStorage.getItem(key);
+        } catch (e) {
+          console.warn("Storage access blocked by browser tracking prevention. Using temporary memory fallback.", e);
+          return this.fallback[key] || null;
+        }
+      },
+      setItem: function(key, value) {
+        try {
+          localStorage.setItem(key, value);
+        } catch (e) {
+          console.warn("Storage access blocked by browser tracking prevention. Using temporary memory fallback.", e);
+          this.fallback[key] = value;
+        }
+      },
+      removeItem: function(key) {
+        try {
+          localStorage.removeItem(key);
+        } catch (e) {
+          console.warn("Storage access blocked by browser tracking prevention. Using temporary memory fallback.", e);
+          delete this.fallback[key];
+        }
+      },
+      fallback: {}
+    };
+
+    // --- API & SETTINGS ---
+    // ใส่ลิงก์ Web App URL ที่ได้จากการ Deploy Google Apps Script
+    const API_URL = 'https://script.google.com/macros/s/AKfycbyXqhEkaST4iRI_zVO53_5FmzFBweqPJd9tkcNImACe-SVlAIzDZuRq5pVFrusvYb4C/exec'; 
+    const LIFF_ID = '2010418665-b4ZwYIkx'; // ใส่ LIFF ID ถ้าใช้งานร่วมกับ Line OA
+    
+    // --- MOCK DATABASE SYSTEM (โหมดทดสอบแบบไม่ต้องต่อเซิร์ฟเวอร์หลัก) ---
+    const MOCK_DB = {
+      init: function() {
+        if (!safeStorage.getItem("metro_mock_residents")) {
+          safeStorage.setItem("metro_mock_residents", JSON.stringify([
+            { room_no: "420/101", owner_name: "นายสมชาย ใจดี", contact_no: "081-234-5678", line_user_id: "U1234567890abcdef", status: "Active", email: "somchai@email.com" },
+            { room_no: "420/102", owner_name: "นางสาวสมศรี สมบัติ", contact_no: "089-876-5432", line_user_id: "", status: "Active", email: "somsri@email.com" },
+            { room_no: "420/103", owner_name: "Mr. John Doe", contact_no: "082-345-6789", line_user_id: "", status: "Active", email: "john.doe@email.com" }
+          ]));
+        }
+        if (!safeStorage.getItem("metro_mock_announcements")) {
+          safeStorage.setItem("metro_mock_announcements", JSON.stringify([
+            { id: "ANN-001", title: "ประกาศ: ตรวจสอบระบบท่อประปาประจำปี", content: "นิติบุคคลอาคารชุดจะทำการตรวจสอบและทำความสะอาดระบบท่อประปาประจำปี ในวันที่ 25 มิถุนายน 2026 เวลา 09:00 - 15:00 น. ซึ่งอาจทำให้น้ำประปาไหลอ่อนในบางช่วงเวลา ขออภัยในความไม่สะดวก", image_url: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80", category: "ประกาศด่วน", published_at: new Date().toISOString(), is_active: true },
+            { id: "ANN-002", title: "ขอความร่วมมืองดส่งเสียงดังหลังเวลา 22:00 น.", content: "เพื่อความสงบเรียบร้อยและความเกรงใจต่อผู้พักอาศัยร่วมอาคาร นิติบุคคลฯ ขอความร่วมมืองดกิจกรรมที่ก่อให้เกิดเสียงดังรบกวนในห้องพักหลังเวลา 22:00 น.", image_url: "https://images.unsplash.com/photo-1516321318423-f06f85e504b3?auto=format&fit=crop&w=800&q=80", category: "ทั่วไป", published_at: new Date().toISOString(), is_active: true }
+          ]));
+        }
+        if (!safeStorage.getItem("metro_mock_repairs")) {
+          safeStorage.setItem("metro_mock_repairs", JSON.stringify([
+            { request_id: "RP-20260617-001", room_no: "420/101", category: "ประปา", description: "ก๊อกน้ำในห้องน้ำมีน้ำซึมตลอดเวลา", image_before_url: "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=800&q=80", image_after_url: "", status: "Pending", technician_name: "", created_at: new Date().toISOString(), updated_at: new Date().toISOString(), resolved_at: "", feedback_score: "" }
+          ]));
+        }
+        if (!safeStorage.getItem("metro_mock_payments")) {
+          safeStorage.setItem("metro_mock_payments", JSON.stringify([
+            { payment_id: "INV-202606-420101", room_no: "420/101", billing_period: "06/2026", amount: 1500.00, type: "ค่าส่วนกลาง", status: "Unpaid", slip_url: "", payment_date: "", receipt_pdf_url: "", receipt_image_url: "" },
+            { payment_id: "INV-202606-420102", room_no: "420/102", billing_period: "06/2026", amount: 1850.00, type: "ค่าน้ำประปา", status: "Unpaid", slip_url: "", payment_date: "", receipt_pdf_url: "", receipt_image_url: "" }
+          ]));
+        }
+      },
+      getResidents: function() { return JSON.parse(safeStorage.getItem("metro_mock_residents")); },
+      getAnnouncements: function() { return JSON.parse(safeStorage.getItem("metro_mock_announcements")); },
+      getRepairs: function() { return JSON.parse(safeStorage.getItem("metro_mock_repairs")); },
+      getPayments: function() { return JSON.parse(safeStorage.getItem("metro_mock_payments")); },
+      save: function(key, data) { safeStorage.setItem(key, JSON.stringify(data)); }
+    };
+    MOCK_DB.init();
+
+    // --- OVERRIDE FETCH FOR MOCK / FALLBACK MODE ---
+    const originalFetch = window.fetch;
+    window.fetch = function(url, options) {
+      const isPlaceholder = typeof url === 'string' && (url.includes("YOUR_GAS_DEPLOYMENT_URL") || url.includes("_YOUR_GAS_"));
+      
+      if (typeof url === 'string' && url.startsWith(API_URL)) {
+        if (isPlaceholder) {
+          return Promise.resolve(new Response(JSON.stringify(handleMockRequest(url, options)), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }));
+        }
+        
+        return originalFetch(url, options).then(res => {
+          // Check if response is valid JSON (sometimes restricted access returns Google login HTML)
+          const contentType = res.headers.get("content-type");
+          if (res.ok && contentType && contentType.includes("application/json")) {
+            return res;
+          }
+          throw new Error("Response is not JSON (Possible restricted access on Google Apps Script)");
+        }).catch(err => {
+          console.warn("API Server connection failed. Falling back to local Mock Mode.", err);
+          showToast("⚠️ ไม่สามารถเชื่อมต่อคลาวด์ได้: สลับใช้โหมดออฟไลน์จำลอง (Mock Mode)<br><small>กรุณาเช็กสิทธิ์เข้าถึง (Deploy as 'Anyone') ของตัว GAS</small>", "warning");
+          
+          return Promise.resolve(new Response(JSON.stringify(handleMockRequest(url, options)), {
+            status: 200,
+            headers: { 'Content-Type': 'application/json' }
+          }));
+        });
+      }
+      return originalFetch(url, options);
+    };
+
+    function handleMockRequest(urlStr, options) {
+      let url;
+      try {
+        url = new URL(urlStr);
+      } catch(e) {
+        url = new URL(urlStr, window.location.origin);
+      }
+      let action = url.searchParams.get("action");
+      let roomNo = url.searchParams.get("room_no");
+      
+      let postData = null;
+      if (options && options.body) {
+        try {
+          postData = JSON.parse(options.body);
+          action = postData.action || action;
+        } catch(e) {}
+      }
+      
+      switch (action) {
+        case 'getAnnouncements':
+          return { success: true, data: MOCK_DB.getAnnouncements().filter(a => a.is_active) };
+        case 'getResident':
+          var resident = MOCK_DB.getResidents().find(r => r.room_no === roomNo);
+          if (resident) {
+            if (resident.status === 'Pending') {
+              var regTime = new Date(resident.registered_at || new Date());
+              var now = new Date();
+              var diffMinutes = (now - regTime) / (1000 * 60);
+              if (diffMinutes >= 5) {
+                resident.status = "Active";
+                var list = MOCK_DB.getResidents();
+                var idx = list.findIndex(r => r.room_no === roomNo);
+                if (idx !== -1) {
+                  list[idx].status = "Active";
+                  MOCK_DB.save("metro_mock_residents", list);
+                }
+              } else {
+                var waitMin = Math.ceil(5 - diffMinutes);
+                return { success: false, status: 'Pending', message: 'ห้องพักของคุณอยู่ระหว่างรออนุมัติจากระบบ (จะอนุมัติอัตโนมัติในอีกประมาณ ' + waitMin + ' นาที)' };
+              }
+            }
+            
+            if (resident.status === 'Active') {
+              var contact = String(resident.contact_no).trim();
+              var email = String(resident.email).trim();
+              var allRooms = [];
+              if (contact || email) {
+                allRooms = MOCK_DB.getResidents().filter(function(row) {
+                  if (row.status !== 'Active') return false;
+                  
+                  var rowContact = String(row.contact_no).trim();
+                  var rowEmail = String(row.email).trim();
+                  
+                  var contactMatch = false;
+                  if (contact && rowContact) {
+                    var c1 = contact.replace(/[^0-9]/g, '');
+                    var c2 = rowContact.replace(/[^0-9]/g, '');
+                    if (c1 && c2 && (c1 === c2 || c1.endsWith(c2) || c2.endsWith(c1))) {
+                      contactMatch = true;
+                    }
+                  }
+                  
+                  var emailMatch = false;
+                  if (email && rowEmail && email.toLowerCase() === rowEmail.toLowerCase()) {
+                    emailMatch = true;
+                  }
+                  
+                  return contactMatch || emailMatch;
+                }).map(function(row) {
+                  return { room_no: row.room_no, owner_name: row.owner_name };
+                });
+              }
+              return { success: true, data: resident, all_rooms: allRooms };
+            }
+            return { success: false, message: 'บัญชีห้องพักนี้ถูกระงับการใช้งาน กรุณาติดต่อสำนักงานนิติบุคคลฯ' };
+          }
+          return { success: false, message: 'ไม่พบเลขที่ห้องนี้ในระบบ กรุณาลงทะเบียนเข้าใช้งาน' };
+        case 'getRepairs':
+          var repairs = MOCK_DB.getRepairs().filter(r => r.room_no === roomNo)
+                                            .sort((a,b) => new Date(b.created_at) - new Date(a.created_at));
+          return { success: true, data: repairs };
+        case 'getPayments':
+          var payments = MOCK_DB.getPayments().filter(p => p.room_no === roomNo);
+          return { success: true, data: payments };
+        case 'createRepairRequest':
+          var repairsList = MOCK_DB.getRepairs();
+          var id = "RP-" + new Date().toISOString().slice(0,10).replace(/-/g,'') + "-" + Math.floor(100 + Math.random()*900);
+          var newRepair = {
+            request_id: id,
+            room_no: residentData.room_no,
+            category: postData.category,
+            description: postData.description,
+            image_before_url: postData.image_base64 || "https://images.unsplash.com/photo-1584622650111-993a426fbf0a?auto=format&fit=crop&w=400&q=80",
+            image_after_url: "",
+            status: "Pending",
+            technician_name: "",
+            created_at: new Date().toISOString(),
+            updated_at: new Date().toISOString(),
+            resolved_at: "",
+            feedback_score: ""
+          };
+          repairsList.push(newRepair);
+          MOCK_DB.save("metro_mock_repairs", repairsList);
+          return { success: true, data: { request_id: id } };
+        case 'uploadPaymentSlip':
+          var paymentsList = MOCK_DB.getPayments();
+          var pIdx = paymentsList.findIndex(p => p.payment_id === postData.payment_id);
+          if (pIdx !== -1) {
+            paymentsList[pIdx].status = "Under Review";
+            paymentsList[pIdx].slip_url = postData.slip_base64 || "https://images.unsplash.com/photo-1554415707-6e8cfc93fe23?auto=format&fit=crop&w=400&q=80";
+            paymentsList[pIdx].payment_date = new Date().toISOString();
+            MOCK_DB.save("metro_mock_payments", paymentsList);
+            return { success: true, message: "ส่งหลักฐานสำเร็จ" };
+          }
+          return { success: false, message: "ไม่พบรายการชำระเงิน" };
+        case 'linkLineAccount':
+          return { success: true, message: "เชื่อมโยงไลน์จำลองสำเร็จ" };
+        case 'registerResident':
+          var residentsList = MOCK_DB.getResidents();
+          var existing = residentsList.find(r => r.room_no === postData.room_no);
+          if (existing) {
+            if (existing.status === 'Active') {
+              return { success: false, message: 'เลขที่ห้องนี้มีผู้ลงทะเบียนและได้รับการอนุมัติใช้งานอยู่แล้ว' };
+            }
+            existing.owner_name = postData.owner_name;
+            existing.contact_no = postData.contact_no;
+            existing.line_user_id = postData.line_user_id || "";
+            existing.status = 'Pending';
+            existing.registered_at = new Date().toISOString();
+            existing.email = postData.email || "";
+          } else {
+            residentsList.push({
+              room_no: postData.room_no,
+              owner_name: postData.owner_name,
+              contact_no: postData.contact_no,
+              line_user_id: postData.line_user_id || "",
+              status: 'Pending',
+              registered_at: new Date().toISOString(),
+              email: postData.email || ""
+            });
+          }
+          MOCK_DB.save("metro_mock_residents", residentsList);
+          return { success: true, status: 'Pending', message: "ลงทะเบียนสำเร็จ! ระบบจำลองจำทำการอนุมัติอัตโนมัติภายใน 5 นาที หรือท่านสามารถเปิดหน้า admin.html แล้วกดอนุมัติสิทธิ์ได้ทันที" };
+      }
+    }
+
+    let residentData = null;
+    let lineUserId = "";
+    let currentLang = safeStorage.getItem("metro_lang") || "th";
+    let userRooms = [];
+
+    // --- TRANSLATIONS DICTIONARY ---
+    const TRANSLATIONS = {
+      th: {
+        loader_text: "กำลังโหลดข้อมูลระบบ...",
+        condo_name: "เมโทร จอมเทียน",
+        condo_portal: "ระบบบริการลูกบ้าน",
+        room_no_display: "ห้องพัก",
+        office_open: "สำนักงาน: เปิดทำการ",
+        tab_news: "ข่าวสารประชาสัมพันธ์",
+        tab_repair: "แจ้งซ่อมบำรุง",
+        tab_payment: "บิลและการชำระเงิน",
+        tab_contact: "ติดต่อสำนักงาน",
+        news_section_title: "ข่าวสารทั่วไปของโครงการ",
+        
+        // Auth Modal
+        auth_title: "เข้าสู่ระบบบริการลูกบ้าน",
+        auth_desc: "กรุณากรอกเลขที่ห้องและเบอร์โทรศัพท์ที่ลงทะเบียนไว้กับนิติบุคคล เพื่อยืนยันตัวตนการเข้าใช้งานระบบ",
+        auth_room_label: "เลขที่ห้อง (เช่น 420/101)",
+        auth_room_placeholder: "420/XXX",
+        auth_phone_label: "เบอร์โทรศัพท์ (4 ตัวท้าย หรือ เบอร์เต็ม)",
+        auth_phone_placeholder: "08XXXXXXXX หรือ 4 ตัวท้าย",
+        auth_submit_btn: "ยืนยันตัวตน",
+        auth_tab_login: "เข้าสู่ระบบ",
+        auth_tab_register: "ลงทะเบียนใหม่",
+        btn_logout: "ออกจากระบบ",
+        reg_desc: "กรุณากรอกข้อมูลเพื่อลงทะเบียนเข้าใช้งานระบบ โดยระบุเลขห้อง ชื่อเจ้าของห้อง เบอร์โทรศัพท์ และอีเมล",
+        reg_room_label: "เลขที่ห้อง (เช่น 420/101)",
+        reg_name_label: "ชื่อ-นามสกุล เจ้าของห้อง",
+        reg_name_placeholder: "เช่น นายสมชาย ใจดี",
+        reg_phone_label: "เบอร์โทรศัพท์มือถือ",
+        reg_email_label: "อีเมลติดต่อ",
+        reg_email_placeholder: "example@email.com",
+        reg_submit_btn: "ส่งคำขอลงทะเบียน",
+        pending_title: "อยู่ระหว่างรอการอนุมัติ",
+        pending_check_btn: "ลองตรวจสอบสถานะอีกครั้ง",
+        
+        // Repair Tab
+        repair_new_title: "แจ้งซ่อมใหม่",
+        repair_room_label: "เลขที่ห้อง",
+        repair_cat_label: "หมวดหมู่งานซ่อม",
+        repair_cat_placeholder: "เลือกหมวดหมู่...",
+        repair_cat_electric: "ระบบไฟฟ้า",
+        repair_cat_plumb: "ระบบประปา/สุขาภิบาล",
+        repair_cat_ac: "เครื่องปรับอากาศ",
+        repair_cat_struct: "โครงสร้าง/ประตู/หน้าต่าง",
+        repair_cat_other: "อื่นๆ (ระบุในรายละเอียด)",
+        repair_desc_label: "รายละเอียดปัญหา",
+        repair_desc_placeholder: "กรุณาระบุรายละเอียด เช่น ก๊อกน้ำอ่างล้างหน้าไหลไม่หยุด...",
+        repair_photo_label: "แนบรูปภาพความเสียหาย (ก่อนซ่อม)",
+        repair_upload_placeholder: "คลิกเพื่ออัปโหลดรูปภาพ",
+        repair_submit_btn: "ส่งคำขอแจ้งซ่อม",
+        repair_history_title: "ประวัติการแจ้งซ่อมของท่าน",
+        repair_no_history: "ไม่มีรายการแจ้งซ่อมบำรุงของคุณ",
+        
+        // Repair List Cards
+        repair_card_id: "รหัสงาน",
+        repair_card_cat: "หมวดหมู่",
+        repair_card_desc: "รายละเอียด",
+        repair_card_date: "แจ้งเมื่อ",
+        repair_card_tech: "ช่างรับงาน",
+        repair_card_before: "ก่อนซ่อม",
+        repair_card_after: "หลังซ่อม/ปิดงาน",
+        repair_status_pending: "รอดำเนินการ",
+        repair_status_progress: "กำลังซ่อม",
+        repair_status_completed: "เสร็จสิ้น",
+        repair_status_cancelled: "ยกเลิก",
+
+        // Payment Tab
+        payment_channels: "ช่องทางการชำระเงิน",
+        payment_desc: "กรุณาโอนเงินเข้าบัญชีนิติบุคคลฯ และแนบหลักฐานการชำระเงินในรายการบิลด้านขวาเพื่อออกใบเสร็จรับเงิน",
+        payment_bank: "ธนาคารกรุงไทย",
+        payment_acc_name: "ชื่อบัญชี: นิติบุคคลอาคารชุด เมโทร จอมเทียน คอนโดเทล",
+        payment_note_1: "หลังจากแนบสลิปแล้ว นิติบุคคลจะทำการตรวจสอบภายใน 24 ชม.",
+        payment_note_2: "เมื่อยืนยันแล้ว สามารถดาวน์โหลดใบเสร็จ PDF ได้ทันที",
+        payment_history_title: "รายการค่าใช้จ่ายค้างชำระ & ประวัติการชำระเงิน",
+        payment_no_history: "ไม่พบบิลค่าใช้จ่าย",
+        payment_period: "รอบบิล",
+        payment_item: "รายการ",
+        payment_amount: "จำนวนเงิน",
+        payment_currency: "บาท",
+        
+        // Payment Actions & Statuses
+        payment_status_unpaid: "ค้างชำระ",
+        payment_status_review: "รอตรวจสอบ",
+        payment_status_paid: "จ่ายแล้ว",
+        payment_btn_upload: "แนบหลักฐาน",
+        payment_btn_verifying: "นิติกำลังตรวจ",
+        payment_btn_receipt_pdf: "ใบเสร็จ PDF",
+        payment_btn_receipt_img: "รูปใบเสร็จ",
+        payment_btn_confirmed: "ยืนยันชำระแล้ว",
+
+        // Contact Tab
+        contact_title: "สำนักงานนิติบุคคลฯ",
+        contact_address_label: "ที่อยู่โครงการ",
+        contact_phone_label: "เบอร์ติดต่อ",
+        contact_email_label: "อีเมลติดต่อ",
+        contact_hours_label: "เวลาเปิดทำการ",
+        contact_hours_val: "เปิดบริการทุกวัน (จันทร์ - อาทิตย์) เวลา 08:00 น. - 17:00 น.",
+        contact_sec_title: "บริการและความปลอดภัย",
+        contact_sec_desc: "ลูกบ้านทุกท่านสามารถสื่อสารและทำธุรกรรมได้อย่างสะดวกรวดเร็วผ่าน Line OA และ Web App นี้ โดยจะมีการบันทึกประวัติการส่งข้อมูลและใบเสร็จทั้งหมดไว้ในระบบ Google Sheets มีความโปร่งใสและตรวจสอบย้อนหลังได้ตลอดเวลา",
+        contact_link_line_title: "ต้องการเชื่อม Line OA แชท?",
+        contact_link_line_desc: "พิมพ์คำว่า \"แจ้งซ่อม\" ในช่องแชท Line เพื่อลงทะเบียนและรับข้อความแจ้งเตือนสถานะงานหรือใบเสร็จโดยตรงผ่าน Line ของคุณ",
+        contact_emergency_title: "เบอร์โทรศัพท์ฉุกเฉิน (บริการ 24 ชั่วโมง)",
+        contact_emergency_desc: "กรณีน้ำรั่ว ท่อแตก ไฟดับลิฟต์ค้าง หรือเหตุฉุกเฉินอื่นๆ",
+        contact_emergency_mgr: "ผจก.อาคาร",
+        contact_emergency_tech: "ช่างอาคาร",
+        
+        // Upload Slip Modal
+        slip_modal_title: "แนบหลักฐานการโอนเงิน",
+        slip_modal_id: "รหัสรายการ",
+        slip_modal_amount: "จำนวนเงินที่ต้องชำระ (บาท)",
+        slip_modal_upload: "อัปโหลดสลิปธนาคาร",
+        slip_modal_upload_desc: "คลิกเพื่อแนบรูปภาพสลิป (.jpg, .png)",
+        slip_modal_submit: "ยืนยันและส่งหลักฐาน",
+        
+        // Toasts & Messages
+        toast_auth_phone_err: "เบอร์โทรศัพท์ไม่ตรงกับในระบบ กรุณาตรวจสอบข้อมูล",
+        toast_server_err: "ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้",
+        toast_offline_mode: "เข้าสู่ระบบแบบออฟไลน์",
+        toast_repair_success: "ส่งแจ้งซ่อมสำเร็จ รหัสงาน: ",
+        toast_repair_err: "ไม่สามารถส่งข้อมูลได้: ",
+        toast_slip_warning: "กรุณาเลือกรูปภาพสลิปชำระเงิน",
+        toast_slip_uploading: "กำลังอัปโหลดหลักฐาน...",
+        toast_slip_success: "ส่งหลักฐานสำเร็จ นิติกำลังทำการตรวจสอบ",
+        toast_slip_err: "เกิดข้อผิดพลาด: ",
+        toast_network_err: "ไม่สามารถอัปโหลดข้อมูลได้เนื่องจากเครือข่ายขัดข้อง"
+      },
+      en: {
+        loader_text: "System loading...",
+        condo_name: "Metro Jomthien",
+        condo_portal: "Resident Services",
+        room_no_display: "Room",
+        office_open: "Office: Open Daily",
+        tab_news: "Announcements",
+        tab_repair: "Repair Request",
+        tab_payment: "Bills & Payments",
+        tab_contact: "Contact Us",
+        news_section_title: "General Announcements",
+        
+        // Auth Modal
+        auth_title: "Login to Resident Services",
+        auth_desc: "Please enter your room number and registered phone number to verify your identity.",
+        auth_room_label: "Room Number (e.g. 420/101)",
+        auth_room_placeholder: "420/XXX",
+        auth_phone_label: "Phone Number (Last 4 digits or full)",
+        auth_phone_placeholder: "08XXXXXXXX or last 4 digits",
+        auth_submit_btn: "Verify Identity",
+        auth_tab_login: "Login",
+        auth_tab_register: "Register",
+        btn_logout: "Log Out",
+        reg_desc: "Please fill out the form to register, including your room number, owner name, phone, and email.",
+        reg_room_label: "Room Number (e.g. 420/101)",
+        reg_name_label: "Owner Full Name",
+        reg_name_placeholder: "e.g. Mr. John Doe",
+        reg_phone_label: "Mobile Phone Number",
+        reg_email_label: "Email Address",
+        reg_email_placeholder: "example@email.com",
+        reg_submit_btn: "Submit Registration",
+        pending_title: "Awaiting Approval",
+        pending_check_btn: "Check Status Again",
+        
+        // Repair Tab
+        repair_new_title: "New Repair Request",
+        repair_room_label: "Room Number",
+        repair_cat_label: "Repair Category",
+        repair_cat_placeholder: "Select category...",
+        repair_cat_electric: "Electrical System",
+        repair_cat_plumb: "Plumbing / Sanitary",
+        repair_cat_ac: "Air Conditioning",
+        repair_cat_struct: "Structure / Door / Window",
+        repair_cat_other: "Others (Specify in description)",
+        repair_desc_label: "Problem Details",
+        repair_desc_placeholder: "Please describe the problem, e.g. Kitchen tap is leaking...",
+        repair_photo_label: "Attach Photo of Damage (Before repair)",
+        repair_upload_placeholder: "Click to upload a photo",
+        repair_submit_btn: "Submit Request",
+        repair_history_title: "Your Repair History",
+        repair_no_history: "No repair history found",
+        
+        // Repair List Cards
+        repair_card_id: "Job ID",
+        repair_card_cat: "Category",
+        repair_card_desc: "Details",
+        repair_card_date: "Requested",
+        repair_card_tech: "Technician",
+        repair_card_before: "Before",
+        repair_card_after: "After",
+        repair_status_pending: "Pending",
+        repair_status_progress: "In Progress",
+        repair_status_completed: "Completed",
+        repair_status_cancelled: "Cancelled",
+
+        // Payment Tab
+        payment_channels: "Payment Methods",
+        payment_desc: "Please transfer money to the juristic account and attach the payment slip below.",
+        payment_bank: "Krungthai Bank",
+        payment_acc_name: "Account Name: Metro Jomthien Condotel Juristic Person",
+        payment_note_1: "Juristic office will verify the payment within 24 hours.",
+        payment_note_2: "Once approved, you can download the PDF receipt instantly.",
+        payment_history_title: "Unpaid Bills & Payment History",
+        payment_no_history: "No bills found",
+        payment_period: "Period",
+        payment_item: "Item",
+        payment_amount: "Amount",
+        payment_currency: "THB",
+        
+        // Payment Actions & Statuses
+        payment_status_unpaid: "Unpaid",
+        payment_status_review: "Under Review",
+        payment_status_paid: "Paid",
+        payment_btn_upload: "Upload Slip",
+        payment_btn_verifying: "Verifying",
+        payment_btn_receipt_pdf: "Receipt PDF",
+        payment_btn_receipt_img: "Receipt Image",
+        payment_btn_confirmed: "Confirmed",
+
+        // Contact Tab
+        contact_title: "Juristic Office",
+        contact_address_label: "Project Address",
+        contact_phone_label: "Phone",
+        contact_email_label: "Email",
+        contact_hours_label: "Office Hours",
+        contact_hours_val: "Open daily (Monday - Sunday) 08:00 AM - 05:00 PM",
+        contact_sec_title: "Service & Security",
+        contact_sec_desc: "All residents can communicate and perform transactions easily through Line OA and this Web App. Data is securely tracked in Google Sheets to ensure transparency and accountability.",
+        contact_link_line_title: "Want to connect with Line OA Chat?",
+        contact_link_line_desc: "Type \"แจ้งซ่อม\" or \"repair\" in the Line chat to link and receive instant notifications for job updates and receipts.",
+        contact_emergency_title: "Emergency Numbers (24 Hours)",
+        contact_emergency_desc: "In case of water leaks, elevator failure, blackouts, or other emergency situations.",
+        contact_emergency_mgr: "Building Manager",
+        contact_emergency_tech: "Technician",
+        
+        // Upload Slip Modal
+        slip_modal_title: "Attach Payment Slip",
+        slip_modal_id: "Item ID",
+        slip_modal_amount: "Amount Due (THB)",
+        slip_modal_upload: "Upload Bank Slip",
+        slip_modal_upload_desc: "Click to attach slip image (.jpg, .png)",
+        slip_modal_submit: "Confirm & Submit",
+        
+        // Toasts & Messages
+        toast_auth_phone_err: "Phone number does not match. Please verify your details.",
+        toast_server_err: "Unable to connect to the server.",
+        toast_offline_mode: "Logged in offline mode",
+        toast_repair_success: "Repair request submitted. Job ID: ",
+        toast_repair_err: "Failed to submit request: ",
+        toast_slip_warning: "Please select a slip image",
+        toast_slip_uploading: "Uploading proof...",
+        toast_slip_success: "Slip uploaded successfully. Awaiting verification.",
+        toast_slip_err: "Error: ",
+        toast_network_err: "Failed to upload due to network error."
+      }
+    };
+
+    // --- LANGUAGE SWITCHER ENGINE ---
+    function setLanguage(lang) {
+      currentLang = lang;
+      safeStorage.setItem("metro_lang", lang);
+      translatePage();
+    }
+
+    function translatePage() {
+      // 1. Static Texts
+      document.querySelectorAll("[data-i18n]").forEach(el => {
+        const key = el.getAttribute("data-i18n");
+        if (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) {
+          const icon = el.querySelector("i");
+          if (icon) {
+            el.innerHTML = "";
+            el.appendChild(icon);
+            el.appendChild(document.createTextNode(" " + TRANSLATIONS[currentLang][key]));
+          } else {
+            el.innerText = TRANSLATIONS[currentLang][key];
+          }
+        }
+      });
+
+      // 2. Placeholders
+      document.querySelectorAll("[data-i18n-placeholder]").forEach(el => {
+        const key = el.getAttribute("data-i18n-placeholder");
+        if (TRANSLATIONS[currentLang] && TRANSLATIONS[currentLang][key]) {
+          el.setAttribute("placeholder", TRANSLATIONS[currentLang][key]);
+        }
+      });
+
+      // 3. Dropdowns
+      const catSelect = document.getElementById("repairCategory");
+      if (catSelect) {
+        catSelect.options[0].text = TRANSLATIONS[currentLang].repair_cat_placeholder;
+        catSelect.options[1].text = TRANSLATIONS[currentLang].repair_cat_electric;
+        catSelect.options[2].text = TRANSLATIONS[currentLang].repair_cat_plumb;
+        catSelect.options[3].text = TRANSLATIONS[currentLang].repair_cat_ac;
+        catSelect.options[4].text = TRANSLATIONS[currentLang].repair_cat_struct;
+        catSelect.options[5].text = TRANSLATIONS[currentLang].repair_cat_other;
+      }
+
+      // Update document title
+      document.title = TRANSLATIONS[currentLang].condo_portal + " - " + TRANSLATIONS[currentLang].condo_name;
+
+      updateLangUi();
+
+      // Refresh dynamic UI elements
+      if (residentData) {
+        document.getElementById("userRoomDisplay").innerHTML = `<span data-i18n="room_no_display">${TRANSLATIONS[currentLang].room_no_display}</span>: ${residentData.room_no}`;
+        loadRoomRepairs();
+        loadRoomPayments();
+      }
+      loadAnnouncements();
+    }
+
+    function updateLangUi() {
+      // Style header language buttons
+      document.querySelectorAll(".lang-btn").forEach(btn => {
+        btn.style.background = "transparent";
+        btn.style.color = "var(--text-secondary)";
+      });
+      const activeBtn = document.getElementById("lang-btn-" + currentLang);
+      if (activeBtn) {
+        activeBtn.style.background = "var(--accent-gradient)";
+        activeBtn.style.color = "#fff";
+      }
+
+      // Style modal language buttons
+      document.querySelectorAll(".lang-btn-modal").forEach(btn => {
+        btn.style.background = "transparent";
+        btn.style.color = "var(--text-secondary)";
+      });
+      const activeModalBtn = document.getElementById("modal-lang-btn-" + currentLang);
+      if (activeModalBtn) {
+        activeModalBtn.style.background = "var(--accent-gradient)";
+        activeModalBtn.style.color = "#fff";
+      }
+    }
+
+    // --- DATA TRANSLATION HELPERS ---
+    function translateCategory(cat) {
+      if (currentLang === 'en') {
+        if (cat === "ประชาสัมพันธ์" || cat === "Announcements") return "Announcements";
+        if (cat === "ประกาศด่วน" || cat === "Urgent") return "Urgent";
+        if (cat === "ทั่วไป" || cat === "General") return "General Info";
+      } else {
+        if (cat === "Announcements" || cat === "ประชาสัมพันธ์") return "ประชาสัมพันธ์";
+        if (cat === "Urgent" || cat === "ประกาศด่วน") return "ประกาศด่วน";
+        if (cat === "General Info" || cat === "ทั่วไป") return "ทั่วไป";
+      }
+      return cat;
+    }
+
+    function translateRepairCategory(cat) {
+      if (currentLang === 'en') {
+        if (cat === "ไฟฟ้า") return "Electrical";
+        if (cat === "ประปา") return "Plumbing";
+        if (cat === "เครื่องปรับอากาศ") return "Air Conditioning";
+        if (cat === "โครงสร้าง") return "Structure/Doors/Windows";
+        if (cat === "อื่นๆ") return "Others";
+      } else {
+        if (cat === "Electrical") return "ไฟฟ้า";
+        if (cat === "Plumbing") return "ประปา";
+        if (cat === "Air Conditioning") return "เครื่องปรับอากาศ";
+        if (cat === "Structure/Doors/Windows") return "โครงสร้าง";
+        if (cat === "Others") return "อื่นๆ";
+      }
+      return cat;
+    }
+
+    function translatePaymentType(type) {
+      if (currentLang === 'en') {
+        if (type === "ค่าส่วนกลาง") return "Maintenance Fee";
+        if (type === "ค่าน้ำประปา") return "Water Bill";
+        if (type === "ค่าที่จอดรถ") return "Parking Fee";
+        if (type === "อื่นๆ") return "Others";
+      } else {
+        if (type === "Maintenance Fee") return "ค่าส่วนกลาง";
+        if (type === "Water Bill") return "ค่าน้ำประปา";
+        if (type === "Parking Fee") return "ค่าที่จอดรถ";
+        if (type === "Others") return "อื่นๆ";
+      }
+      return type;
+    }
+
+    // --- AUTH MODAL TAB SYSTEM ---
+    function switchAuthTab(tab) {
+      document.querySelectorAll(".auth-tab-btn").forEach(btn => {
+        btn.classList.remove("active");
+        btn.style.color = "var(--text-secondary)";
+        btn.style.borderBottomColor = "transparent";
+      });
+      
+      const activeBtn = document.getElementById("auth-tab-" + tab);
+      if (activeBtn) {
+        activeBtn.classList.add("active");
+        activeBtn.style.color = "#fff";
+        activeBtn.style.borderBottomColor = "var(--accent-gold)";
+      }
+      
+      if (tab === 'login') {
+        document.getElementById("loginFormWrapper").style.display = "block";
+        document.getElementById("registerFormWrapper").style.display = "none";
+        document.getElementById("pendingStatusWrapper").style.display = "none";
+      } else if (tab === 'register') {
+        document.getElementById("loginFormWrapper").style.display = "none";
+        document.getElementById("registerFormWrapper").style.display = "block";
+        document.getElementById("pendingStatusWrapper").style.display = "none";
+      }
+    }
+
+    function handleRegisterSubmit(e) {
+      e.preventDefault();
+      const roomNo = document.getElementById("regRoomNo").value.trim();
+      const ownerName = document.getElementById("regOwnerName").value.trim();
+      const phone = document.getElementById("regPhone").value.trim();
+      const email = document.getElementById("regEmail").value.trim();
+      
+      showLoader(true);
+      
+      const payload = {
+        action: "registerResident",
+        room_no: roomNo,
+        owner_name: ownerName,
+        contact_no: phone,
+        email: email,
+        line_user_id: lineUserId || ""
+      };
+      
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        showLoader(false);
+        if (res.success) {
+          showToast(res.message, "success");
+          
+          // Switch view to pending status
+          document.getElementById("loginFormWrapper").style.display = "none";
+          document.getElementById("registerFormWrapper").style.display = "none";
+          document.getElementById("pendingStatusWrapper").style.display = "block";
+          document.getElementById("pendingMessageText").innerText = res.message;
+          
+          // Save temporary room in localStorage to check status next time
+          safeStorage.setItem("metro_pending_room_no", roomNo);
+        } else {
+          showToast(res.message, "error");
+        }
+      })
+      .catch(err => {
+        showLoader(false);
+        showToast("ไม่สามารถส่งข้อมูลลงทะเบียนได้", "error");
+        console.error(err);
+      });
+    }
+
+    function checkPendingStatus() {
+      const pendingRoom = localStorage.getItem("metro_pending_room_no") || document.getElementById("regRoomNo").value.trim();
+      if (!pendingRoom) {
+        switchAuthTab('login');
+        return;
+      }
+      
+      showLoader(true);
+      fetch(`${API_URL}?action=getResident&room_no=${encodeURIComponent(pendingRoom)}`)
+        .then(res => res.json())
+        .then(res => {
+          showLoader(false);
+          if (res.success) {
+            // Approved!
+            // Normalize resident data
+            residentData = {
+              room_no: res.data.room_no || res.data['room_no'] || res.data['เลขที่ห้อง'] || res.data['ห้อง'] || res.data['เลขห้อง'] || res.data['ห้องพัก'] || '',
+              owner_name: res.data.owner_name || res.data['owner_name'] || res.data['ชื่อเจ้าของห้อง'] || res.data['ชื่อ'] || res.data['ชื่อ-นามสกุล'] || '',
+              contact_no: res.data.contact_no || res.data['contact_no'] || res.data['เบอร์ติดต่อ'] || res.data['เบอร์โทรศัพท์'] || res.data['เบอร์โทร'] || res.data['โทรศัพท์'] || '',
+              line_user_id: res.data.line_user_id || res.data['line_user_id'] || res.data['line_id'] || res.data['ไลน์'] || '',
+              status: res.data.status || res.data['status'] || res.data['สถานะ'] || res.data['สถานะทะเบียน'] || '',
+              registered_at: res.data.registered_at || res.data['registered_at'] || res.data['วันที่ลงทะเบียน'] || res.data['วันที่'] || '',
+              email: res.data.email || res.data['email'] || res.data['อีเมล'] || res.data['อีเมล์'] || ''
+            };
+            safeStorage.setItem("metro_room_no", pendingRoom);
+            safeStorage.removeItem("metro_pending_room_no");
+            loginSuccess();
+            showToast("การอนุมัติเสร็จสมบูรณ์ ยินดีต้อนรับ!", "success");
+          } else {
+            if (res.status === 'Pending') {
+              showToast(res.message, "warning");
+              document.getElementById("pendingMessageText").innerText = res.message;
+            } else {
+              // Not found or inactive
+              showToast(res.message, "error");
+              safeStorage.removeItem("metro_pending_room_no");
+              switchAuthTab('login');
+            }
+          }
+        })
+        .catch(err => {
+          showLoader(false);
+          showToast("ไม่สามารถติดต่อเซิร์ฟเวอร์ได้", "error");
+        });
+    }
+
+    // --- INITIALIZE APPLICATION ---
+    document.addEventListener("DOMContentLoaded", function() {
+      // Set language initial display
+      translatePage();
+
+      // Setup tabs
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        btn.addEventListener("click", function() {
+          const targetTab = this.getAttribute("data-tab");
+          switchTab(targetTab);
+        });
+      });
+
+      // Auth form handler
+      document.getElementById("authForm").addEventListener("submit", handleAuthSubmit);
+
+      // Register form handler
+      document.getElementById("registerForm").addEventListener("submit", handleRegisterSubmit);
+
+      // Repair form handler
+      document.getElementById("repairForm").addEventListener("submit", handleRepairSubmit);
+
+      // Upload slip form handler
+      document.getElementById("uploadSlipForm").addEventListener("submit", handleSlipSubmit);
+
+      // Check cache for user room session
+      const savedRoom = safeStorage.getItem("metro_room_no");
+      const pendingRoom = safeStorage.getItem("metro_pending_room_no");
+      if (savedRoom) {
+        verifyRoom(savedRoom);
+      } else if (pendingRoom) {
+        // Show pending screen directly
+        document.getElementById("loginFormWrapper").style.display = "none";
+        document.getElementById("registerFormWrapper").style.display = "none";
+        document.getElementById("pendingStatusWrapper").style.display = "block";
+        checkPendingStatus(); // Auto check
+      } else {
+        // Try LIFF Init
+        initLiff();
+      }
+    });
+
+    // --- TABS SYSTEM ---
+    function switchTab(tabId) {
+      document.querySelectorAll(".tab-btn").forEach(btn => {
+        if (btn.getAttribute("data-tab") === tabId) {
+          btn.classList.add("active");
+        } else {
+          btn.classList.remove("active");
+        }
+      });
+      document.querySelectorAll(".tab-content").forEach(content => {
+        if (content.id === tabId) {
+          content.classList.add("active");
+        } else {
+          content.classList.remove("active");
+        }
+      });
+    }
+
+    // --- LIFF INTEGRATION ---
+    function initLiff() {
+      if (!LIFF_ID || LIFF_ID === 'YOUR_LIFF_ID') {
+        document.getElementById("pageLoader").style.display = "none";
+        return;
+      }
+      
+      liff.init({ liffId: LIFF_ID }).then(() => {
+        if (liff.isLoggedIn()) {
+          liff.getProfile().then(profile => {
+            lineUserId = profile.userId;
+            // You can auto-login if lineUserId already linked in DB
+            attemptAutoLoginWithLine(lineUserId);
+          });
+        } else {
+          document.getElementById("pageLoader").style.display = "none";
+        }
+      }).catch(err => {
+        console.error("LIFF Init error:", err);
+        document.getElementById("pageLoader").style.display = "none";
+      });
+    }
+
+    // --- AUTHENTICATION & LOGIN ---
+    function handleAuthSubmit(e) {
+      e.preventDefault();
+      const roomNo = document.getElementById("authRoomNo").value.trim();
+      const phone = document.getElementById("authPhone").value.trim();
+      
+      showLoader(true);
+      
+      fetch(`${API_URL}?action=getResident&room_no=${encodeURIComponent(roomNo)}`)
+        .then(res => res.json())
+        .then(res => {
+          showLoader(false);
+          if (res.success) {
+            // Normalize resident data properties
+            const normResident = {
+              room_no: res.data.room_no || res.data['room_no'] || res.data['เลขที่ห้อง'] || res.data['ห้อง'] || res.data['เลขห้อง'] || res.data['ห้องพัก'] || '',
+              owner_name: res.data.owner_name || res.data['owner_name'] || res.data['ชื่อเจ้าของห้อง'] || res.data['ชื่อ'] || res.data['ชื่อ-นามสกุล'] || '',
+              contact_no: res.data.contact_no || res.data['contact_no'] || res.data['เบอร์ติดต่อ'] || res.data['เบอร์โทรศัพท์'] || res.data['เบอร์โทร'] || res.data['โทรศัพท์'] || '',
+              line_user_id: res.data.line_user_id || res.data['line_user_id'] || res.data['line_id'] || res.data['ไลน์'] || '',
+              status: res.data.status || res.data['status'] || res.data['สถานะ'] || res.data['สถานะทะเบียน'] || '',
+              registered_at: res.data.registered_at || res.data['registered_at'] || res.data['วันที่ลงทะเบียน'] || res.data['วันที่'] || '',
+              email: res.data.email || res.data['email'] || res.data['อีเมล'] || res.data['อีเมล์'] || ''
+            };
+            res.data = normResident;
+
+            // Verify Phone (match last 4 digits)
+            const dbPhone = String(res.data.contact_no).replace(/[^0-9]/g, '');
+            const inputPhone = String(phone).replace(/[^0-9]/g, '');
+            
+            if (dbPhone.endsWith(inputPhone) || inputPhone.endsWith(dbPhone)) {
+              residentData = res.data;
+              userRooms = res.all_rooms || [];
+              safeStorage.setItem("metro_room_no", roomNo);
+              loginSuccess();
+              
+              // If in LIFF, link the accounts in DB
+              if (lineUserId) {
+                linkLineInDb(roomNo, lineUserId, phone);
+              }
+            } else {
+              showToast("เบอร์โทรศัพท์ไม่ตรงกับในระบบ กรุณาตรวจสอบข้อมูล", "error");
+            }
+          } else {
+            if (res.status === 'Pending') {
+              showToast(res.message, "warning");
+              document.getElementById("loginFormWrapper").style.display = "none";
+              document.getElementById("registerFormWrapper").style.display = "none";
+              document.getElementById("pendingStatusWrapper").style.display = "block";
+              document.getElementById("pendingMessageText").innerText = res.message;
+              localStorage.setItem("metro_pending_room_no", roomNo);
+            } else {
+              showToast(res.message, "error");
+            }
+          }
+        })
+        .catch(err => {
+          showLoader(false);
+          showToast("ไม่สามารถเชื่อมต่อเซิร์ฟเวอร์ได้", "error");
+          console.error(err);
+        });
+    }
+
+    function verifyRoom(roomNo) {
+      showLoader(true);
+      fetch(`${API_URL}?action=getResident&room_no=${encodeURIComponent(roomNo)}`)
+        .then(res => res.json())
+        .then(res => {
+          showLoader(false);
+          if (res.success) {
+            // Normalize resident data properties
+            const normResident = {
+              room_no: res.data.room_no || res.data['room_no'] || res.data['เลขที่ห้อง'] || res.data['ห้อง'] || res.data['เลขห้อง'] || res.data['ห้องพัก'] || '',
+              owner_name: res.data.owner_name || res.data['owner_name'] || res.data['ชื่อเจ้าของห้อง'] || res.data['ชื่อ'] || res.data['ชื่อ-นามสกุล'] || '',
+              contact_no: res.data.contact_no || res.data['contact_no'] || res.data['เบอร์ติดต่อ'] || res.data['เบอร์โทรศัพท์'] || res.data['เบอร์โทร'] || res.data['โทรศัพท์'] || '',
+              line_user_id: res.data.line_user_id || res.data['line_user_id'] || res.data['line_id'] || res.data['ไลน์'] || '',
+              status: res.data.status || res.data['status'] || res.data['สถานะ'] || res.data['สถานะทะเบียน'] || '',
+              registered_at: res.data.registered_at || res.data['registered_at'] || res.data['วันที่ลงทะเบียน'] || res.data['วันที่'] || '',
+              email: res.data.email || res.data['email'] || res.data['อีเมล'] || res.data['อีเมล์'] || ''
+            };
+            res.data = normResident;
+            residentData = res.data;
+            userRooms = res.all_rooms || [];
+            loginSuccess();
+          } else {
+            if (res.status === 'Pending') {
+              safeStorage.removeItem("metro_room_no");
+              safeStorage.setItem("metro_pending_room_no", roomNo);
+              document.getElementById("loginFormWrapper").style.display = "none";
+              document.getElementById("registerFormWrapper").style.display = "none";
+              document.getElementById("pendingStatusWrapper").style.display = "block";
+              document.getElementById("pendingMessageText").innerText = res.message;
+            } else {
+              safeStorage.removeItem("metro_room_no");
+              document.getElementById("authModal").style.display = "flex";
+            }
+          }
+        })
+        .catch(err => {
+          showLoader(false);
+          // If network error, still allow cache login to keep app responsive
+          residentData = { room_no: roomNo };
+          loginSuccess();
+          showToast("เข้าสู่ระบบแบบออฟไลน์", "warning");
+        });
+    }
+
+    function attemptAutoLoginWithLine(userId) {
+      // Normally we'd scan our database for this lineUserId
+      // For this sample, we prompt user to link once, then we use localStorage or fetch from API
+      document.getElementById("pageLoader").style.display = "none";
+    }
+
+    function linkLineInDb(roomNo, lId, phone) {
+      const payload = {
+        action: "linkLineAccount",
+        room_no: roomNo,
+        line_user_id: lId,
+        phone: phone
+      };
+      
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      });
+    }
+
+    function loginSuccess() {
+      document.getElementById("authModal").style.display = "none";
+      document.getElementById("logoutBtn").style.display = "inline-flex";
+      document.getElementById("repairRoomNo").value = residentData.room_no;
+      
+      const roomDisplay = document.getElementById("userRoomDisplay");
+      if (userRooms && userRooms.length > 1) {
+        let optionsHtml = "";
+        userRooms.forEach(r => {
+          const selectedAttr = (String(r.room_no).trim() === String(residentData.room_no).trim()) ? "selected" : "";
+          optionsHtml += `<option value="${r.room_no}" ${selectedAttr}>${r.room_no}</option>`;
+        });
+        
+        roomDisplay.innerHTML = `
+          <span data-i18n="room_no_display">${TRANSLATIONS[currentLang].room_no_display}</span>:
+          <select id="roomSelector" onchange="switchActiveRoom(this.value)" style="background: rgba(255,255,255,0.08); color: #fff; border: 1px solid var(--accent-gold); border-radius: 4px; padding: 2px 6px; font-size: 0.8rem; cursor: pointer; outline: none; transition: var(--transition-smooth);">
+            ${optionsHtml}
+          </select>
+        `;
+      } else {
+        roomDisplay.innerHTML = `<span data-i18n="room_no_display">${TRANSLATIONS[currentLang].room_no_display}</span>: ${residentData.room_no}`;
+      }
+      
+      // Load specific room data
+      loadRoomRepairs();
+      loadRoomPayments();
+    }
+
+    function switchActiveRoom(newRoomNo) {
+      showLoader(true);
+      fetch(`${API_URL}?action=getResident&room_no=${encodeURIComponent(newRoomNo)}`)
+        .then(res => res.json())
+        .then(res => {
+          showLoader(false);
+          if (res.success) {
+            residentData = res.data;
+            userRooms = res.all_rooms || userRooms;
+            safeStorage.setItem("metro_room_no", newRoomNo);
+            loginSuccess();
+            showToast(currentLang === 'en' ? "Switched to room " + newRoomNo : "สลับไปยังห้อง " + newRoomNo + " แล้ว", "success");
+          } else {
+            showToast(res.message, "error");
+          }
+        })
+        .catch(err => {
+          showLoader(false);
+          showToast("ไม่สามารถสลับห้องพักได้", "error");
+          console.error(err);
+        });
+    }
+
+    function logoutResident() {
+      safeStorage.removeItem("metro_room_no");
+      safeStorage.removeItem("metro_pending_room_no");
+      residentData = null;
+      userRooms = [];
+      document.getElementById("logoutBtn").style.display = "none";
+      document.getElementById("userRoomDisplay").innerHTML = `<span data-i18n="room_no_display">${TRANSLATIONS[currentLang].room_no_display}</span>: -`;
+      document.getElementById("authModal").style.display = "flex";
+      
+      // Reset Forms
+      document.getElementById("authForm").reset();
+      document.getElementById("registerForm").reset();
+      switchAuthTab('login');
+    }
+
+    // --- DATA FETCHING & RENDERING ---
+
+    function loadAnnouncements() {
+      fetch(`${API_URL}?action=getAnnouncements`)
+        .then(res => res.json())
+        .then(res => {
+          if (res.success && res.data.length > 0) {
+            const list = res.data;
+            // Feature announcement (first one)
+            const hero = list[0];
+            document.getElementById("heroImg").src = hero.image_url || "https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=1200&q=80";
+            document.getElementById("heroCategory").innerText = translateCategory(hero.category || "ประชาสัมพันธ์");
+            document.getElementById("heroTitle").innerText = hero.title;
+            document.getElementById("heroDesc").innerText = hero.content;
+            document.getElementById("heroAnnouncement").style.display = "flex";
+            
+            // Other announcements
+            let html = "";
+            for (let i = 1; i < list.length; i++) {
+              const item = list[i];
+              const dateStr = new Date(item.published_at).toLocaleDateString(currentLang === 'en' ? 'en-US' : 'th-TH', { day: 'numeric', month: 'short', year: 'numeric' });
+              html += `
+                <div class="glass-panel news-card">
+                  <img src="${item.image_url || 'https://images.unsplash.com/photo-1545324418-cc1a3fa10c00?auto=format&fit=crop&w=800&q=80'}" class="news-card-img" alt="News Image">
+                  <div class="news-card-body">
+                    <div class="news-card-meta">
+                      <span class="news-card-category">${translateCategory(item.category || 'ทั่วไป')}</span>
+                      <span>${dateStr}</span>
+                    </div>
+                    <h4 class="news-card-title">${item.title}</h4>
+                    <p class="news-card-content">${item.content}</p>
+                  </div>
+                </div>
+              `;
+            }
+            document.getElementById("announcementsList").innerHTML = html || `<p style='color: var(--text-secondary);'>${currentLang === 'en' ? 'No other announcements' : 'ไม่มีประกาศอื่นๆ เพิ่มเติม'}</p>`;
+          } else {
+            document.getElementById("announcementsList").innerHTML = `<p style='color: var(--text-secondary);'>${currentLang === 'en' ? 'No announcements at this time.' : 'ยังไม่มีข่าวสารในขณะนี้'}</p>`;
+          }
+        })
+        .catch(err => console.error("Error loading announcements:", err));
+    }
+
+    function loadRoomRepairs() {
+      if (!residentData) return;
+      fetch(`${API_URL}?action=getRepairs&room_no=${encodeURIComponent(residentData.room_no)}`)
+        .then(res => res.json())
+        .then(res => {
+          const container = document.getElementById("repairsContainer");
+          if (res.success && res.data.length > 0) {
+            let html = "";
+            res.data.forEach(item => {
+              const dateStr = new Date(item.created_at).toLocaleDateString(currentLang === 'en' ? 'en-US' : 'th-TH', { day: '2-digit', month: '2-digit', year: 'numeric', hour: '2-digit', minute: '2-digit' });
+              let statusClass = "badge-pending";
+              let statusText = TRANSLATIONS[currentLang].repair_status_pending;
+              
+              if (item.status === "In Progress") { statusClass = "badge-progress"; statusText = TRANSLATIONS[currentLang].repair_status_progress; }
+              else if (item.status === "Completed") { statusClass = "badge-completed"; statusText = TRANSLATIONS[currentLang].repair_status_completed; }
+              else if (item.status === "Cancelled") { statusClass = "badge-cancelled"; statusText = TRANSLATIONS[currentLang].repair_status_cancelled; }
+              
+              html += `
+                <div class="glass-panel repair-card">
+                  <div class="card-header">
+                    <span class="card-id">${item.request_id}</span>
+                    <span class="badge ${statusClass}">${statusText}</span>
+                  </div>
+                  <div class="card-body">
+                    <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].repair_card_cat}:</span> <span>${translateRepairCategory(item.category)}</span></div>
+                    <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].repair_card_desc}:</span> <span>${item.description}</span></div>
+                    <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].repair_card_date}:</span> <span>${dateStr}</span></div>
+                    ${item.technician_name ? `<div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].repair_card_tech}:</span> <span style="color: #fff; font-weight: 500;">${item.technician_name}</span></div>` : ''}
+                    
+                    <div class="card-detail-img">
+                      ${item.image_before_url ? `<div><p style="font-size:0.75rem; color:var(--text-muted);">${TRANSLATIONS[currentLang].repair_card_before}</p><img src="${item.image_before_url}" class="thumbnail" onclick="window.open('${item.image_before_url}')"></div>` : ''}
+                      ${item.image_after_url ? `<div><p style="font-size:0.75rem; color:var(--text-muted);">${TRANSLATIONS[currentLang].repair_card_after}</p><img src="${item.image_after_url}" class="thumbnail" onclick="window.open('${item.image_after_url}')"></div>` : ''}
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+            container.innerHTML = html;
+          } else {
+            container.innerHTML = `<p style='color: var(--text-secondary); text-align: center; padding: 20px;'>${TRANSLATIONS[currentLang].repair_no_history}</p>`;
+          }
+        })
+        .catch(err => console.error("Error loading repairs:", err));
+    }
+
+    function loadRoomPayments() {
+      if (!residentData) return;
+      fetch(`${API_URL}?action=getPayments&room_no=${encodeURIComponent(residentData.room_no)}`)
+        .then(res => res.json())
+        .then(res => {
+          const container = document.getElementById("paymentsContainer");
+          if (res.success && res.data.length > 0) {
+            let html = "";
+            res.data.forEach(item => {
+              let statusClass = "badge-unpaid";
+              let statusText = TRANSLATIONS[currentLang].payment_status_unpaid;
+              let actionBtn = "";
+              
+              if (item.status === "Under Review") {
+                statusClass = "badge-review";
+                statusText = TRANSLATIONS[currentLang].payment_status_review;
+                actionBtn = `<button class="btn btn-secondary btn-sm" disabled><i class="fa-solid fa-spinner fa-spin"></i> ${TRANSLATIONS[currentLang].payment_btn_verifying}</button>`;
+              } else if (item.status === "Paid") {
+                statusClass = "badge-paid";
+                statusText = TRANSLATIONS[currentLang].payment_status_paid;
+                if (item.receipt_pdf_url) {
+                  actionBtn = `<a href="${item.receipt_pdf_url}" target="_blank" class="btn btn-primary btn-sm" style="width: auto; text-decoration: none;"><i class="fa-solid fa-file-pdf"></i> ${TRANSLATIONS[currentLang].payment_btn_receipt_pdf}</a>`;
+                } else if (item.receipt_image_url) {
+                  actionBtn = `<a href="${item.receipt_image_url}" target="_blank" class="btn btn-primary btn-sm" style="width: auto; text-decoration: none;"><i class="fa-solid fa-image"></i> ${TRANSLATIONS[currentLang].payment_btn_receipt_img}</a>`;
+                } else {
+                  actionBtn = `<button class="btn btn-secondary btn-sm" disabled>${TRANSLATIONS[currentLang].payment_btn_confirmed}</button>`;
+                }
+              } else {
+                actionBtn = `<button class="btn btn-primary btn-sm" onclick="openUploadSlipModal('${item.payment_id}', '${item.amount}')"><i class="fa-solid fa-cloud-arrow-up"></i> ${TRANSLATIONS[currentLang].payment_btn_upload}</button>`;
+              }
+              
+              html += `
+                <div class="glass-panel payment-card">
+                  <div class="card-header">
+                    <span class="card-id">${item.payment_id}</span>
+                    <div>
+                      <span class="badge ${statusClass}">${statusText}</span>
+                    </div>
+                  </div>
+                  <div class="card-body" style="display: flex; justify-content: space-between; align-items: flex-end;">
+                    <div>
+                      <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_period}:</span> <span>${item.billing_period}</span></div>
+                      <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_item}:</span> <span>${translatePaymentType(item.type)}</span></div>
+                      <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_amount}:</span> <span style="color: var(--accent-gold); font-weight: bold; font-size: 1.05rem;">${parseFloat(item.amount).toLocaleString()} ${TRANSLATIONS[currentLang].payment_currency}</span></div>
+                    </div>
+                    <div style="text-align: right;">
+                      ${actionBtn}
+                    </div>
+                  </div>
+                </div>
+              `;
+            });
+            container.innerHTML = html;
+          } else {
+            container.innerHTML = `<p style='color: var(--text-secondary); text-align: center; padding: 20px;'>${TRANSLATIONS[currentLang].payment_no_history}</p>`;
+          }
+        })
+        .catch(err => console.error("Error loading payments:", err));
+    }
+
+    // --- FORM SUBMISSIONS ---
+
+    function handleRepairSubmit(e) {
+      e.preventDefault();
+      const category = document.getElementById("repairCategory").value;
+      const description = document.getElementById("repairDescription").value.trim();
+      const fileInput = document.getElementById("repairFileInput");
+      
+      const submitBtn = e.target.querySelector("button[type='submit']");
+      const btnText = submitBtn.querySelector(".btn-text");
+      
+      submitBtn.disabled = true;
+      btnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${currentLang === 'en' ? 'Submitting...' : 'กำลังส่งคำแจ้ง...'}`;
+      
+      let payload = {
+        action: "createRepairRequest",
+        room_no: residentData.room_no,
+        category: category,
+        description: description
+      };
+      
+      if (fileInput.files.length > 0) {
+        const file = fileInput.files[0];
+        const reader = new FileReader();
+        reader.readAsDataURL(file);
+        reader.onload = function() {
+          payload.image_base64 = reader.result;
+          payload.image_name = `${Date.now()}_${file.name}`;
+          sendRepairData(payload, submitBtn, btnText);
+        };
+      } else {
+        sendRepairData(payload, submitBtn, btnText);
+      }
+    }
+
+    function sendRepairData(payload, btn, btnText) {
+      fetch(API_URL, {
+        method: "POST",
+        body: JSON.stringify(payload)
+      })
+      .then(res => res.json())
+      .then(res => {
+        btn.disabled = false;
+        btnText.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${TRANSLATIONS[currentLang].repair_submit_btn}`;
+        
+        if (res.success) {
+          showToast(TRANSLATIONS[currentLang].toast_repair_success + res.data.request_id, "success");
+          document.getElementById("repairForm").reset();
+          clearUpload('repairFileInput', 'repairPreview', 'repairPreviewContainer');
+          loadRoomRepairs();
+        } else {
+          showToast(TRANSLATIONS[currentLang].toast_repair_err + res.message, "error");
+        }
+      })
+      .catch(err => {
+        btn.disabled = false;
+        btnText.innerHTML = `<i class="fa-solid fa-paper-plane"></i> ${TRANSLATIONS[currentLang].repair_submit_btn}`;
+        showToast(TRANSLATIONS[currentLang].toast_server_err, "error");
+        console.error(err);
+      });
+    }
+
+    // --- SLIP SUBMISSION ---
+
+    function openUploadSlipModal(paymentId, amount) {
+      document.getElementById("slipPaymentId").value = paymentId;
+      document.getElementById("slipPaymentDisplayId").value = paymentId;
+      document.getElementById("slipAmount").value = parseFloat(amount).toLocaleString();
+      document.getElementById("uploadSlipModal").style.display = "flex";
+    }
+
+    function handleSlipSubmit(e) {
+      e.preventDefault();
+      const paymentId = document.getElementById("slipPaymentId").value;
+      const fileInput = document.getElementById("slipFileInput");
+      
+      if (fileInput.files.length === 0) {
+        showToast(TRANSLATIONS[currentLang].toast_slip_warning, "warning");
+        return;
+      }
+      
+      const submitBtn = e.target.querySelector("button[type='submit']");
+      const btnText = submitBtn.querySelector(".btn-text");
+      submitBtn.disabled = true;
+      btnText.innerHTML = `<i class="fa-solid fa-spinner fa-spin"></i> ${TRANSLATIONS[currentLang].toast_slip_uploading}`;
+      
+      const file = fileInput.files[0];
+      const reader = new FileReader();
+      reader.readAsDataURL(file);
+      reader.onload = function() {
+        const payload = {
+          action: "uploadPaymentSlip",
+          payment_id: paymentId,
+          slip_base64: reader.result,
+          slip_name: `${paymentId}_slip.jpg`
+        };
+        
+        fetch(API_URL, {
+          method: "POST",
+          body: JSON.stringify(payload)
+        })
+        .then(res => res.json())
+        .then(res => {
+          submitBtn.disabled = false;
+          btnText.innerText = TRANSLATIONS[currentLang].slip_modal_submit;
+          closeModal("uploadSlipModal");
+          
+          if (res.success) {
+            showToast(TRANSLATIONS[currentLang].toast_slip_success, "success");
+            document.getElementById("uploadSlipForm").reset();
+            clearUpload('slipFileInput', 'slipPreview', 'slipPreviewContainer');
+            loadRoomPayments();
+          } else {
+            showToast(TRANSLATIONS[currentLang].toast_slip_err + res.message, "error");
+          }
+        })
+        .catch(err => {
+          submitBtn.disabled = false;
+          btnText.innerText = TRANSLATIONS[currentLang].slip_modal_submit;
+          showToast(TRANSLATIONS[currentLang].toast_network_err, "error");
+          console.error(err);
+        });
+      };
+    }
+
+    // --- INTERACTIVE & UI UTILITIES ---
+
+    function triggerFileInput(id) {
+      document.getElementById(id).click();
+    }
+
+    function previewFile(input, previewId, containerId) {
+      const file = input.files[0];
+      if (file) {
+        const reader = new FileReader();
+        reader.onload = function(e) {
+          document.getElementById(previewId).src = e.target.result;
+          document.getElementById(containerId).style.display = "block";
+        };
+        reader.readAsDataURL(file);
+      }
+    }
+
+    function clearUpload(inputId, previewId, containerId) {
+      document.getElementById(inputId).value = "";
+      document.getElementById(previewId).src = "";
+      document.getElementById(containerId).style.display = "none";
+    }
+
+    function closeModal(modalId) {
+      document.getElementById(modalId).style.display = "none";
+    }
+
+    function showLoader(show) {
+      document.getElementById("pageLoader").style.display = show ? "flex" : "none";
+    }
+
+    function showToast(message, type = "info") {
+      const container = document.getElementById("toastContainer");
+      const toast = document.createElement("div");
+      toast.className = `toast ${type}`;
+      
+      let icon = "fa-circle-info";
+      if (type === "success") icon = "fa-circle-check";
+      else if (type === "error") icon = "fa-triangle-exclamation";
+      else if (type === "warning") icon = "fa-circle-exclamation";
+      
+      toast.innerHTML = `<i class="fa-solid ${icon}"></i> <span>${message}</span>`;
+      container.appendChild(toast);
+      
+      // Auto remove
+      setTimeout(() => {
+        toast.style.animation = "slideIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) reverse";
+        setTimeout(() => toast.remove(), 300);
+      }, 4000);
+    }
+  </script>
+</body>
+</html>
