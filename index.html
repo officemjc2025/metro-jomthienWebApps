@@ -1531,7 +1531,7 @@
                     <div>
                       <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_period}:</span> <span>${item.billing_period}</span></div>
                       <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_item}:</span> <span>${translatePaymentType(item.type)}</span></div>
-                      <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_amount}:</span> <span style="color: var(--accent-gold); font-weight: bold; font-size: 1.05rem;">${parseFloat(item.amount).toLocaleString()} ${TRANSLATIONS[currentLang].payment_currency}</span></div>
+                      <div class="card-detail"><span class="label">${TRANSLATIONS[currentLang].payment_amount}:</span> <span style="color: var(--accent-gold); font-weight: bold; font-size: 1.05rem;">${(parseFloat(String(item.amount || '').replace(/,/g, '')) || 0).toLocaleString()} ${TRANSLATIONS[currentLang].payment_currency}</span></div>
                     </div>
                     <div style="text-align: right;">
                       ${actionBtn}
@@ -1615,7 +1615,7 @@
     function openUploadSlipModal(paymentId, amount) {
       document.getElementById("slipPaymentId").value = paymentId;
       document.getElementById("slipPaymentDisplayId").value = paymentId;
-      document.getElementById("slipAmount").value = parseFloat(amount).toLocaleString();
+      document.getElementById("slipAmount").value = (parseFloat(String(amount || '').replace(/,/g, '')) || 0).toLocaleString();
       document.getElementById("uploadSlipModal").style.display = "flex";
     }
 

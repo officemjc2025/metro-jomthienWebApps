@@ -1077,12 +1077,13 @@
         
         const escapedType = String(item.type || '').replace(/'/g, "\\'");
         const escapedPeriod = String(item.billing_period || '').replace(/'/g, "\\'");
+        const escapedAmount = String(item.amount || '').replace(/'/g, "\\'");
         
         let actions = `<div class="action-group" style="display:flex; gap:6px;">`;
         if (item.status === "Under Review") {
-          actions += `<button class="btn btn-primary btn-sm" onclick="openUpdatePaymentModal('${item.payment_id}', '${item.room_no}', '${escapedPeriod}', ${item.amount}, '${escapedType}', '${item.status}', '${item.slip_url || ''}')"><i class="fa-solid fa-magnifying-glass"></i> ตรวจสลิป</button>`;
+          actions += `<button class="btn btn-primary btn-sm" onclick="openUpdatePaymentModal('${item.payment_id}', '${item.room_no}', '${escapedPeriod}', '${escapedAmount}', '${escapedType}', '${item.status}', '${item.slip_url || ''}')"><i class="fa-solid fa-magnifying-glass"></i> ตรวจสลิป</button>`;
         } else {
-          actions += `<button class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--glass-border);" onclick="openUpdatePaymentModal('${item.payment_id}', '${item.room_no}', '${escapedPeriod}', ${item.amount}, '${escapedType}', '${item.status}', '${item.slip_url || ''}')"><i class="fa-solid fa-gear"></i> จัดการ</button>`;
+          actions += `<button class="btn btn-secondary btn-sm" style="background:rgba(255,255,255,0.05); color:#fff; border: 1px solid var(--glass-border);" onclick="openUpdatePaymentModal('${item.payment_id}', '${item.room_no}', '${escapedPeriod}', '${escapedAmount}', '${escapedType}', '${item.status}', '${item.slip_url || ''}')"><i class="fa-solid fa-gear"></i> จัดการ</button>`;
         }
         actions += `</div>`;
         
@@ -1091,12 +1092,14 @@
           receiptCell = `<a href="${item.receipt_pdf_url}" target="_blank" style="color:var(--accent-gold); text-decoration:none;"><i class="fa-solid fa-file-pdf"></i> ใบเสร็จ</a>`;
         }
         
+        const displayAmount = parseFloat(String(item.amount || '').replace(/,/g, '')) || 0;
+        
         html += `
           <tr>
             <td><strong>${item.payment_id}</strong></td>
             <td>ห้อง ${item.room_no}</td>
             <td>${item.billing_period}</td>
-            <td><span style="font-weight:600; color:#fff;">${parseFloat(item.amount).toLocaleString()} บาท</span></td>
+            <td><span style="font-weight:600; color:#fff;">${displayAmount.toLocaleString()} บาท</span></td>
             <td>${item.type}</td>
             <td>${slipCell}</td>
             <td>${dateStr}</td>
@@ -1194,7 +1197,10 @@
       document.getElementById("paymentTargetDisplayId").value = id;
       document.getElementById("paymentRoomNo").value = roomNo;
       document.getElementById("paymentPeriod").value = period;
-      document.getElementById("paymentAmount").value = amount;
+      
+      // Clean amount from formatted text (like commas or currency) to be a valid HTML5 number input value
+      const cleanAmount = String(amount || '').replace(/[^0-9.]/g, '');
+      document.getElementById("paymentAmount").value = cleanAmount;
       document.getElementById("paymentType").value = type;
       document.getElementById("paymentStatus").value = status;
       
